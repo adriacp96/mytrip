@@ -325,6 +325,7 @@ async function handleDeepLinks() {
       trip_id: join,
       user_id: currentUser.id,
       role: "editor",
+      email: currentUser.email,
     });
     if (!error) {
       const t = await fetchTrip(join);
@@ -366,31 +367,57 @@ async function fetchMyRole(tripId) {
 
 async function getUserEmail(userId) {
   if (userCache[userId]) return userCache[userId];
-  const { data } = await supabase.auth.admin?.getUserById(userId);
-  const email = data?.user?.email || "";
-  userCache[userId] = email;
-  return email;
+  // Try to fetch from admin API, but don't fail if unavailable
+  try {
+    const { data } = await supabase.auth.admin?.getUserById?.(userId);
+    const email = data?.user?.email || "";
+    userCache[userId] = email;
+    return email;
+  } catch (e) {
+    return "";
+  }
 }
 
 async function getUserDisplayName(userId) {
-  const { data } = await supabase.auth.admin?.getUserById(userId);
-  const displayName = data?.user?.user_metadata?.display_name;
-  if (displayName) return displayName;
-  const email = data?.user?.email;
-  return email || "";
+  // First check localStorage nickname
+  const storedNickname = getStoredNickname(userId);
+  if (storedNickname) return storedNickname;
+  
+  // Try to fetch from admin API
+  try {
+    const { data } = await supabase.auth.admin?.getUserById?.(userId);
+    const displayName = data?.user?.user_metadata?.display_name;
+    if (displayName) return displayName;
+    const email = data?.user?.email;
+    if (email) return email;
+  } catch (e) {
+    // Silent fail
+  }
+  return "";
 }
 
 async function getUserNameWithEmail(userId) {
   if (userNameCache[userId]) return userNameCache[userId];
-  const { data } = await supabase.auth.admin?.getUserById(userId);
-  const email = data?.user?.email || "";
-  const displayName = data?.user?.user_metadata?.display_name || "";
-  let result = "";
-  if (displayName) {
-    result = displayName;
-  } else if (email) {
-    result = email;
+  
+  // First check localStorage nickname
+  const storedNickname = getStoredNickname(userId);
+  if (storedNickname) {
+    userNameCache[userId] = storedNickname;
+    return storedNickname;
   }
+  
+  // Try to fetch from admin API
+  let email = "";
+  let displayName = "";
+  try {
+    const { data } = await supabase.auth.admin?.getUserById?.(userId);
+    email = data?.user?.email || "";
+    displayName = data?.user?.user_metadata?.display_name || "";
+  } catch (e) {
+    // Silent fail
+  }
+  
+  const result = displayName || email || "";
   userNameCache[userId] = result;
   return result;
 }
@@ -516,6 +543,7 @@ async function createTrip() {
     trip_id: tripId,
     user_id: currentUser.id,
     role: "owner",
+    email: currentUser.email,
   });
 
   createTripBtn.disabled = false;
@@ -541,6 +569,7 @@ async function joinTrip() {
     trip_id: tripId,
     user_id: currentUser.id,
     role: "editor",
+    email: currentUser.email,
   });
 
   joinTripBtn.disabled = false;
@@ -1103,7 +1132,7 @@ async function loadPaidByOptions() {
 
   const { data, error } = await supabase
     .from("trip_members")
-    .select("user_id")
+    .select("user_id,email")
     .eq("trip_id", currentTrip.id);
 
   if (error || !data) {
@@ -1120,10 +1149,11 @@ async function loadPaidByOptions() {
     
     // Get display name for this member
     if (member.user_id === currentUser.id) {
-      const displayName = getCurrentDisplayName();
+      const displayName = getHeaderDisplayName();
       option.textContent = displayName + " (You)";
     } else {
-      option.textContent = await getUserNameWithEmail(member.user_id);
+      const nickname = getStoredNickname(member.user_id);
+      option.textContent = nickname || member.email || "";
     }
     
     expensePaidBy.appendChild(option);
@@ -1313,7 +1343,7 @@ async function loadMembers() {
 
   const { data, error } = await supabase
     .from("trip_members")
-    .select("user_id,role,joined_at")
+    .select("user_id,role,joined_at,email")
     .eq("trip_id", currentTrip.id);
 
   if (error) return setMsg(membersMsg, error.message, "bad");
@@ -1322,16 +1352,16 @@ async function loadMembers() {
 
   setMsg(membersMsg, "", "");
 
-  // Pre-fetch display names for all members
+  // Pre-fetch display names for all members (use email from table + stored nicknames)
   const memberNames = {};
   for (const m of data) {
-    memberNames[m.user_id] = await getUserDisplayName(m.user_id);
+    const nickname = getStoredNickname(m.user_id);
+    memberNames[m.user_id] = nickname || m.email || "";
   }
 
   for (const member of data) {
-    const email = await getUserEmail(member.user_id);
     const balanceInfo = await calculateMemberBalances(member.user_id);
-    membersList.appendChild(renderMemberTile(member, email, balanceInfo, memberNames));
+    membersList.appendChild(renderMemberTile(member, member.email, balanceInfo, memberNames));
   }
 }
 
