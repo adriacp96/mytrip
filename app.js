@@ -1224,29 +1224,51 @@ async function deleteExpense(expenseId) {
 }
 
 // ---- members
-async function calculateMemberBalance(userId) {
-  if (!currentTrip) return 0;
+async function calculateMemberBalances(userId) {
+  if (!currentTrip) return { total: 0, details: {} };
 
-  // Calculate what this member paid
-  const { data: paidExpenses } = await supabase
+  // Get all expenses for this trip
+  const { data: allExpenses } = await supabase
     .from("expenses")
-    .select("amount")
-    .eq("trip_id", currentTrip.id)
-    .eq("paid_by", userId);
-  
-  const totalPaid = (paidExpenses || []).reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    .select("id, amount, paid_by")
+    .eq("trip_id", currentTrip.id);
 
-  // Calculate what this member owes from splits
-  const { data: splits } = await supabase
+  if (!allExpenses?.length) return { total: 0, details: {} };
+
+  // Get all splits for this trip
+  const { data: allSplits } = await supabase
     .from("expense_splits")
-    .select("share_amount, expenses!inner(trip_id)")
-    .eq("user_id", userId)
-    .eq("expenses.trip_id", currentTrip.id);
+    .select("expense_id, user_id, share_amount")
+    .in("expense_id", allExpenses.map(e => e.id));
 
-  const totalOwed = (splits || []).reduce((sum, split) => sum + (split.share_amount || 0), 0);
+  // Calculate balance with each other member
+  const details = {};
 
-  // Positive means they are owed money, negative means they owe money
-  return totalPaid - totalOwed;
+  for (const expense of allExpenses) {
+    const splits = (allSplits || []).filter(s => s.expense_id === expense.id);
+    
+    // If this user paid this expense
+    if (expense.paid_by === userId) {
+      // Everyone who owes a split owes this user
+      for (const split of splits) {
+        if (split.user_id !== userId) {
+          details[split.user_id] = (details[split.user_id] || 0) + split.share_amount;
+        }
+      }
+    }
+    
+    // If this user has a split in this expense
+    const userSplit = splits.find(s => s.user_id === userId);
+    if (userSplit && expense.paid_by !== userId) {
+      // This user owes the payer
+      details[expense.paid_by] = (details[expense.paid_by] || 0) - userSplit.share_amount;
+    }
+  }
+
+  // Calculate total
+  const total = Object.values(details).reduce((sum, amt) => sum + amt, 0);
+
+  return { total, details };
 }
 
 async function loadMembers() {
@@ -1266,25 +1288,43 @@ async function loadMembers() {
 
   setMsg(membersMsg, "", "");
 
+  // Pre-fetch display names for all members
+  const memberNames = {};
+  for (const m of data) {
+    memberNames[m.user_id] = await getUserDisplayName(m.user_id);
+  }
+
   for (const member of data) {
     const email = await getUserEmail(member.user_id);
-    const balance = await calculateMemberBalance(member.user_id);
-    membersList.appendChild(renderMemberTile(member, email, balance));
+    const balanceInfo = await calculateMemberBalances(member.user_id);
+    membersList.appendChild(renderMemberTile(member, email, balanceInfo, memberNames));
   }
 }
 
-function renderMemberTile(member, email, balance = 0) {
+function renderMemberTile(member, email, balanceInfo = { total: 0, details: {} }, memberNames = {}) {
   const el = document.createElement("div");
   el.className = "tile";
   const isCurrentUser = member.user_id === currentUser.id;
   const isOwner = currentRole === "owner";
   const displayName = isCurrentUser ? (getStoredNickname(currentUser.id) || email) : email;
   
+  const balance = balanceInfo.total;
   let balanceText = "";
-  if (balance > 0) {
-    balanceText = `<span style="color: #4ade80;">Is owed ${fmtCurrency(balance, currentTrip.currency)}</span>`;
-  } else if (balance < 0) {
-    balanceText = `<span style="color: #f87171;">Owes ${fmtCurrency(Math.abs(balance), currentTrip.currency)}</span>`;
+  
+  if (balance !== 0) {
+    // Find the largest debt/credit
+    const entries = Object.entries(balanceInfo.details).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    
+    if (entries.length > 0) {
+      const [otherUserId, amount] = entries[0];
+      const otherName = memberNames[otherUserId] || shortId(otherUserId);
+      
+      if (amount > 0) {
+        balanceText = `<span style="color: #4ade80;">Is owed ${fmtCurrency(amount, currentTrip.currency)} by ${esc(otherName)}</span>`;
+      } else if (amount < 0) {
+        balanceText = `<span style="color: #f87171;">Owes ${fmtCurrency(Math.abs(amount), currentTrip.currency)} to ${esc(otherName)}</span>`;
+      }
+    }
   } else {
     balanceText = `<span style="color: #94a3b8;">Settled up</span>`;
   }
