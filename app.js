@@ -286,7 +286,7 @@ async function loadTrips() {
     .from("trip_members")
     .select("role, trips(id,title,start_date,end_date,description,currency,created_at,owner_id)")
     .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false, referencedTable: "trips" });
+    .order("start_date", { ascending: true, referencedTable: "trips", nullsFirst: false });
 
   if (error) return setMsg(tripsMsg, error.message, "bad");
 
