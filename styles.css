@@ -103,7 +103,7 @@ body {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   padding-top: env(safe-area-inset-top);
 }
 
