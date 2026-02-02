@@ -34,7 +34,7 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 html {
-  background: var(--bg);
+  background: transparent;
 }
 body {
   margin: 0;
