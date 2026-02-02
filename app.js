@@ -1164,22 +1164,13 @@ async function loadExpenses() {
 
 function renderBudgetSummary(expenses, currency) {
   const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const byCategory = {};
-  const byPerson = {};
-
-  expenses.forEach((e) => {
-    byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
-    byPerson[e.paid_by] = (byPerson[e.paid_by] || 0) + e.amount;
-  });
+  const myTotal = expenses
+    .filter(e => e.paid_by === currentUser.id)
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
 
   let html = `<div class="budgetGrid">`;
   html += `<div class="budgetCard"><div class="budgetLabel">Total spent</div><div class="budgetAmount">${fmtCurrency(total, currency)}</div></div>`;
-  
-  Object.entries(byCategory).forEach(([cat, amount]) => {
-    const icon = getCategoryIcon(cat);
-    html += `<div class="budgetCard"><div class="budgetLabel">${icon} ${esc(cat)}</div><div class="budgetAmount">${fmtCurrency(amount, currency)}</div></div>`;
-  });
-
+  html += `<div class="budgetCard"><div class="budgetLabel">Spent by me</div><div class="budgetAmount">${fmtCurrency(myTotal, currency)}</div></div>`;
   html += `</div>`;
   return html;
 }
