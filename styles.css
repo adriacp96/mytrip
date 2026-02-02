@@ -121,12 +121,18 @@ body {
 .brandSub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 
 .topRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-top: 2px; }
+.topRight .btn,
+.topRight .userEmail {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
 
 .userEmail {
   color: var(--text);
   font-size: 13px;
   font-weight: 500;
-  padding: 9px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.25);
