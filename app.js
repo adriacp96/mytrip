@@ -55,6 +55,8 @@ const tripCard = $("tripCard");
 const loginBtn = $("loginBtn");
 const logoutBtn = $("logoutBtn");
 const userBtn = $("userBtn");
+const a2hsOverlay = $("a2hsOverlay");
+const a2hsClose = $("a2hsClose");
 
 const authMsg = $("authMsg");
 const tripsMsg = $("tripsMsg");
@@ -150,6 +152,21 @@ let userCache = {};          // cache for user info
 
 // ---- auth
 let authMode = "signin"; // "signin" or "signup"
+
+// ---- add to home screen (iOS)
+function shouldShowA2HS() {
+  const ua = window.navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+  const dismissed = localStorage.getItem("a2hsDismissed") === "1";
+  return isIOS && !isStandalone && !dismissed;
+}
+
+function showA2HS() {
+  if (a2hsOverlay && shouldShowA2HS()) {
+    a2hsOverlay.classList.remove("hidden");
+  }
+}
 
 async function sendMagicLink() {
   const email = ($("email").value || "").trim();
@@ -1106,6 +1123,12 @@ logoutBtn.addEventListener("click", logOut);
 userBtn.addEventListener("click", () => {
   alert(`Logged in as: ${currentUser.email}`);
 });
+a2hsClose.addEventListener("click", () => {
+  localStorage.setItem("a2hsDismissed", "1");
+  a2hsOverlay.classList.add("hidden");
+});
+
+showA2HS();
 
 // Toggle between sign in and sign up
 $("toggleAuthMode").addEventListener("click", () => {

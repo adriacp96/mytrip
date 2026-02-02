@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
     <title>MyTrip</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="apple-touch-icon" href="./icons/icon.svg" />
     <meta name="theme-color" content="#87ceeb" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -13,6 +15,16 @@
 
   <body>
     <div id="vantaBackground"></div>
+    <div id="a2hsOverlay" class="a2hs hidden" role="dialog" aria-live="polite">
+      <div class="a2hsCard">
+        <div class="a2hsTitle">Add MyTrip to Home Screen</div>
+        <div class="a2hsText">
+          Tap the <span class="a2hsIcon">&#x1F5D7;&#xFE0F;</span> Share button, then
+          <strong>Add to Home Screen</strong> to use the app.
+        </div>
+        <button id="a2hsClose" class="btn ghost">Got it</button>
+      </div>
+    </div>
     <div class="app">
       <header class="topbar">
         <div class="brand">
