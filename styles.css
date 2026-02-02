@@ -139,10 +139,10 @@ body {
   #userBtn, #logoutBtn { padding: 4px 8px; font-size: 12px; }
 }
 
-.layout { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 0 12px; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 0 12px; }
 @media (min-width: 900px) {
-  .layout { grid-template-columns: 1fr 1fr; margin: 0 12px; max-width: calc(1100px - 24px); }
-  #tripCard { grid-column: span 2; }
+  .layout { grid-template-columns: 1fr 1fr; gap: 16px; margin: 0 12px; max-width: calc(1100px - 24px); }
+  #tripCard { grid-column: span 2; margin-top: 8px; }
 }
 
 .card {

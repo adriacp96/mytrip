@@ -24,14 +24,23 @@ const cleanUrl = () => {
   history.replaceState({}, "", url.toString());
 };
 
-function fmtRange(start, end) {
-  if (!start && !end) return "No dates set";
-  if (start && !end) return `From ${start}`;
-  if (!start && end) return `Until ${end}`;
-  return `${start} → ${end}`;
+function fmtDate(dateStr) {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
-function fmtCurrency(amount, currency = "USD") {
+function fmtRange(start, end) {
+  if (!start && !end) return "No dates set";
+  if (start && !end) return `From ${fmtDate(start)}`;
+  if (!start && end) return `Until ${fmtDate(end)}`;
+  return `${fmtDate(start)} → ${fmtDate(end)}`;
+}
+
+function fmtCurrency(amount, currency = "AED") {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
 
@@ -354,7 +363,7 @@ function renderTripTile(t) {
       <div class="pill accent">${esc(t.my_role || "member")}</div>
     </div>
     <div class="pills">
-      <span class="pill">Currency: ${esc(t.currency || "USD")}</span>
+      <span class="pill">Currency: ${esc(t.currency || "AED")}</span>
       ${t.description ? `<span class="pill">Has notes</span>` : `<span class="pill">No notes</span>`}
     </div>
   `;
@@ -371,7 +380,7 @@ async function createTrip() {
 
   const { data: tripRows, error: tripErr } = await supabase
     .from("trips")
-    .insert({ owner_id: currentUser.id, title, currency: "USD" })
+    .insert({ owner_id: currentUser.id, title, currency: "AED" })
     .select("id")
     .limit(1);
 
@@ -440,7 +449,7 @@ async function openTripById(tripId) {
 
   // fill settings
   setTitle.value = currentTrip.title || "";
-  setCurrency.value = currentTrip.currency || "USD";
+  setCurrency.value = currentTrip.currency || "AED";
   setStart.value = currentTrip.start_date || "";
   setEnd.value = currentTrip.end_date || "";
   setDescription.value = currentTrip.description || "";
@@ -503,7 +512,7 @@ async function saveTripSettings() {
   if (currentRole !== "owner") return setMsg(tripMsg, "Only owner can save.", "warn");
 
   const title = (setTitle.value || "").trim();
-  const currency = (setCurrency.value || "USD").trim();
+  const currency = (setCurrency.value || "AED").trim();
   const start_date = setStart.value || null;
   const end_date = setEnd.value || null;
   const description = (setDescription.value || "").trim() || null;
@@ -757,7 +766,7 @@ async function addExpense() {
     expense_date,
     category,
     notes,
-    currency: currentTrip.currency || "USD",
+    currency: currentTrip.currency || "AED",
     paid_by: currentUser.id,
   });
 
