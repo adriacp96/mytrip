@@ -123,7 +123,6 @@ const itemTitle = $("itemTitle");
 const itemLocation = $("itemLocation");
 const itemNotes = $("itemNotes");
 const itemCategory = $("itemCategory");
-const itemEditId = $("itemEditId");
 const addItemBtn = $("addItemBtn");
 const itemsList = $("itemsList");
 
@@ -137,7 +136,6 @@ const expensePaidBy = $("expensePaidBy");
 const expenseSplitAll = $("expenseSplitAll");
 const expenseSplitList = $("expenseSplitList");
 const addExpenseBtn = $("addExpenseBtn");
-const expenseEditId = $("expenseEditId");
 const expensesList = $("expensesList");
 const budgetSummary = $("budgetSummary");
 const expensesMsg = $("expensesMsg");
@@ -737,77 +735,46 @@ async function addItem() {
   const location = (itemLocation.value || "").trim() || null;
   const notes = (itemNotes.value || "").trim() || null;
   const category = (itemCategory.value || "activity").trim();
-  const editingId = itemEditId.value;
 
   if (!title) return setMsg(itemsMsg, "Title required.", "warn");
-  if (!day_date) return setMsg(itemsMsg, "Date required.", "warn");
+
+  // Get the next order_seq for this date
+  const { data: existingItems } = await supabase
+    .from("itinerary_items")
+    .select("order_seq")
+    .eq("trip_id", currentTrip.id)
+    .eq("day_date", day_date);
+
+  const nextOrder = (existingItems?.length || 0);
 
   addItemBtn.disabled = true;
-  setMsg(itemsMsg, editingId ? "Updating…" : "Adding…", "warn");
+  setMsg(itemsMsg, "Adding…", "warn");
 
-  let error;
-
-  // If editing, update the existing item
-  if (editingId) {
-    const result = await supabase
-      .from("itinerary_items")
-      .update({
-        title,
-        day_date,
-        location,
-        notes,
-        category,
-        updated_by: currentUser.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", editingId);
-    error = result.error;
-  } else {
-    // Get the next order_seq for this date
-    const { data: existingItems } = await supabase
-      .from("itinerary_items")
-      .select("order_seq")
-      .eq("trip_id", currentTrip.id)
-      .eq("day_date", day_date);
-
-    const nextOrder = (existingItems?.length || 0);
-
-    // Create new item
-    const result = await supabase.from("itinerary_items").insert({
-      trip_id: currentTrip.id,
-      day_date,
-      title,
-      location,
-      notes,
-      category,
-      order_seq: nextOrder,
-      updated_by: currentUser.id,
-    });
-    error = result.error;
-  }
+  const { error } = await supabase.from("itinerary_items").insert({
+    trip_id: currentTrip.id,
+    day_date,
+    title,
+    location,
+    notes,
+    category,
+    order_seq: nextOrder,
+    updated_by: currentUser.id,
+  });
 
   addItemBtn.disabled = false;
 
   if (error) return setMsg(itemsMsg, error.message, "bad");
-
-  addItemBtn.textContent = "Add item";
-  setMsg(itemsMsg, editingId ? "Updated." : "Added.", "ok");
 
   itemDate.value = "";
   itemTitle.value = "";
   itemLocation.value = "";
   itemNotes.value = "";
   itemCategory.value = "activity";
-  itemEditId.value = "";
-  addItemPanel.classList.add("hidden");
 
-  // Reset panel title
-  const panelTitle = addItemPanel.querySelector(".panelTitle");
-  panelTitle.textContent = "Add itinerary item";
-
+  setMsg(itemsMsg, "Added.", "ok");
   await logActivity(currentTrip.id, "added_item", { title, category });
   await loadItems();
-}}
+}
 
 async function loadItems() {
   if (!currentTrip) return;
@@ -848,8 +815,7 @@ function renderItemTile(it, index, total) {
   const canMoveDown = index < total - 1;
 
   el.innerHTML = `
-    <button class="btn ghost small" data-action="edit" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 48px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fbbf24;">✎</button>
-    <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fb7185;">×</button>
+    <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(it.title)}</div>
@@ -1017,26 +983,29 @@ async function moveItemDown(itemId) {
     .update({ order_seq: tempSeq })
     .eq("id", nextItem.id);
 
-  await loadItems();
+  const it = data?.[0];
+  if (!it) return;
+
+  editId.value = it.id;
+  editDate.value = it.day_date || "";
+  editTitle.value = it.title || "";
+  editLocation.value = it.location || "";
+  editNotes.value = it.notes || "";
+  editCategory.value = it.category || "activity";
+
+  editDialog.showModal();
 }
 
 async function saveEdit() {
   const id = editId.value;
   if (!id) return;
 
-  // Support both edit form fields and regular add form fields
-  const dateVal = editDate.value || itemDate.value;
-  const titleVal = editTitle.value || itemTitle.value;
-  const locationVal = editLocation.value || itemLocation.value;
-  const notesVal = editNotes.value || itemNotes.value;
-  const categoryVal = editCategory.value || itemCategory.value;
-
   const payload = {
-    day_date: dateVal || null,
-    title: (titleVal || "").trim(),
-    location: (locationVal || "").trim() || null,
-    notes: (notesVal || "").trim() || null,
-    category: (categoryVal || "activity").trim(),
+    day_date: editDate.value || null,
+    title: (editTitle.value || "").trim(),
+    location: (editLocation.value || "").trim() || null,
+    notes: (editNotes.value || "").trim() || null,
+    category: (editCategory.value || "activity").trim(),
     updated_by: currentUser.id,
     updated_at: new Date().toISOString(),
   };
@@ -1049,74 +1018,38 @@ async function saveEdit() {
   const { error } = await supabase.from("itinerary_items").update(payload).eq("id", id);
 
   saveEditBtn.disabled = false;
-  saveEditBtn.textContent = "Save";
+
+  if (error) return setMsg(editMsg, error.message, "bad");
+
   setMsg(editMsg, "Saved.", "ok");
   editDialog.close();
   await loadItems();
 }
 
 async function deleteItem(itemId) {
-  const id = itemId || itemEditId.value;
+  const id = itemId || editId.value;
   if (!id) return;
 
   const ok = confirm("Delete this item? This cannot be undone.");
   if (!ok) return;
 
+  if (deleteItemBtn) deleteItemBtn.disabled = true;
   if (itemsMsg) setMsg(itemsMsg, "Deleting…", "warn");
+  if (editMsg) setMsg(editMsg, "Deleting…", "warn");
 
   const { error } = await supabase.from("itinerary_items").delete().eq("id", id);
 
+  if (deleteItemBtn) deleteItemBtn.disabled = false;
+
   if (error) {
     if (itemsMsg) setMsg(itemsMsg, error.message, "bad");
+    if (editMsg) setMsg(editMsg, error.message, "bad");
     return;
   }
 
-  setMsg(itemsMsg, "Deleted.", "ok");
-  itemEditId.value = "";
-  addItemPanel.classList.add("hidden");
-  
-  // Reset panel title
-  const panelTitle = addItemPanel.querySelector(".panelTitle");
-  panelTitle.textContent = "Add itinerary item";
-  
+  if (editMsg) setMsg(editMsg, "Deleted.", "ok");
+  editDialog.close();
   await loadItems();
-}
-
-async function editItem(itemId) {
-  if (!currentTrip) return;
-
-  // Fetch the item details
-  const { data, error } = await supabase
-    .from("itinerary_items")
-    .select("id,title,day_date,location,notes,category")
-    .eq("id", itemId)
-    .limit(1);
-
-  if (error || !data?.length) {
-    setMsg(itemsMsg, "Failed to load item.", "bad");
-    return;
-  }
-
-  const item = data[0];
-
-  // Populate the add form with item data
-  itemTitle.value = item.title || "";
-  itemDate.value = item.day_date || "";
-  itemLocation.value = item.location || "";
-  itemNotes.value = item.notes || "";
-  itemCategory.value = item.category || "activity";
-
-  // Store item ID for saving
-  itemEditId.value = itemId;
-
-  // Update panel title and button
-  const panelTitle = addItemPanel.querySelector(".panelTitle");
-  panelTitle.textContent = "EDIT ITINERARY ITEM";
-  addItemBtn.textContent = "Save";
-
-  // Show the panel
-  addItemPanel.classList.remove("hidden");
-  setMsg(itemsMsg, "Editing item - change details and click Save", "warn");
 }
 
 // ---- expenses
@@ -1129,65 +1062,31 @@ async function addExpense() {
   const category = (expenseCategory.value || "general").trim();
   const notes = (expenseNotes.value || "").trim() || null;
   const paid_by = expensePaidBy.value || currentUser.id;
-  const editingId = expenseEditId.value;
 
   if (!title) return setMsg(expensesMsg, "Description required.", "warn");
   if (amount <= 0) return setMsg(expensesMsg, "Amount must be greater than 0.", "warn");
 
   addExpenseBtn.disabled = true;
-  setMsg(expensesMsg, editingId ? "Updating…" : "Adding…", "warn");
+  setMsg(expensesMsg, "Adding…", "warn");
 
-  let expenseId = editingId;
+  const { data: newExpense, error } = await supabase
+    .from("expenses")
+    .insert({
+    trip_id: currentTrip.id,
+    title,
+    amount,
+    expense_date,
+    category,
+    notes,
+    currency: currentTrip.currency || "AED",
+    paid_by,
+  })
+    .select("id")
+    .single();
 
-  // If editing, update the existing expense
-  if (editingId) {
-    const { error } = await supabase
-      .from("expenses")
-      .update({
-        title,
-        amount,
-        expense_date,
-        category,
-        notes,
-        paid_by,
-      })
-      .eq("id", editingId);
+  addExpenseBtn.disabled = false;
 
-    if (error) {
-      addExpenseBtn.disabled = false;
-      return setMsg(expensesMsg, error.message, "bad");
-    }
-
-    // Delete old splits and create new ones
-    const { error: deleteError } = await supabase.from("expense_splits").delete().eq("expense_id", editingId);
-    if (deleteError) {
-      addExpenseBtn.disabled = false;
-      return setMsg(expensesMsg, "Failed to update expense: " + deleteError.message, "bad");
-    }
-  } else {
-    // Create new expense
-    const { data: newExpense, error } = await supabase
-      .from("expenses")
-      .insert({
-        trip_id: currentTrip.id,
-        title,
-        amount,
-        expense_date,
-        category,
-        notes,
-        currency: currentTrip.currency || "AED",
-        paid_by,
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      addExpenseBtn.disabled = false;
-      return setMsg(expensesMsg, error.message, "bad");
-    }
-
-    expenseId = newExpense.id;
-  }
+  if (error) return setMsg(expensesMsg, error.message, "bad");
 
   // Split equally among selected members
   let selectedUsers = [];
@@ -1202,35 +1101,25 @@ async function addExpense() {
   }
 
   if (!selectedUsers.length) {
-    addExpenseBtn.disabled = false;
     setMsg(expensesMsg, "Select at least one member to split.", "warn");
     return;
   }
 
   const share = parseFloat((amount / selectedUsers.length).toFixed(2));
   const splits = selectedUsers.map((userId) => ({
-    expense_id: expenseId,
+    expense_id: newExpense.id,
     user_id: userId,
     share_amount: share,
   }));
 
   const { error: splitError } = await supabase.from("expense_splits").insert(splits);
-  if (splitError) {
-    addExpenseBtn.disabled = false;
-    return setMsg(expensesMsg, splitError.message, "bad");
-  }
+  if (splitError) return setMsg(expensesMsg, splitError.message, "bad");
 
-  addExpenseBtn.disabled = false;
-  addExpenseBtn.textContent = "Add expense";
-  setMsg(expensesMsg, editingId ? "Updated." : "Added.", "ok");
-  
   expenseTitle.value = "";
   expenseAmount.value = "";
   expenseDate.value = "";
   expenseNotes.value = "";
   expenseCategory.value = "general";
-  expenseEditId.value = "";
-  addExpensePanel.classList.add("hidden");
   expensePaidBy.value = currentUser.id;
 
   setMsg(expensesMsg, "Expense added.", "ok");
@@ -1395,8 +1284,7 @@ function renderExpenseTile(exp, paidByName, myShare, splitUserIds = [], memberMa
   const forText = splitNames.length > 0 ? splitNames.join(", ") : "Unknown";
 
   el.innerHTML = `
-    <button class="btn ghost small" data-action="edit-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 48px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fbbf24;">✎</button>
-    <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fb7185;">×</button>
+    <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
@@ -1424,53 +1312,6 @@ async function deleteExpense(expenseId) {
   setMsg(expensesMsg, "Expense deleted.", "ok");
   await logActivity(currentTrip.id, "deleted_expense", { id: expenseId });
   await loadExpenses();
-}
-
-async function editExpense(expenseId) {
-  if (!currentTrip || !expenseId) return;
-
-  // Fetch the expense details
-  const { data, error } = await supabase
-    .from("expenses")
-    .select("id,title,amount,expense_date,category,paid_by")
-    .eq("id", expenseId)
-    .limit(1);
-
-  if (error || !data?.length) {
-    setMsg(expensesMsg, "Failed to load expense.", "bad");
-    return;
-  }
-
-  const exp = data[0];
-
-  // Populate the expense form with existing values
-  expenseTitle.value = exp.title || "";
-  expenseAmount.value = exp.amount || "";
-  expenseDate.value = exp.expense_date || "";
-  expenseCategory.value = exp.category || "general";
-  expensePaidBy.value = exp.paid_by || currentUser.id;
-
-  // Fetch current expense splits to show which members are selected
-  const { data: splits } = await supabase
-    .from("expense_splits")
-    .select("user_id")
-    .eq("expense_id", expenseId);
-
-  const currentSplitUsers = new Set((splits || []).map(s => s.user_id));
-
-  // Update split list checkboxes to reflect current splits
-  const checkboxes = expenseSplitList?.querySelectorAll("input[data-user-id]") || [];
-  checkboxes.forEach(cb => {
-    cb.checked = currentSplitUsers.has(cb.dataset.userId);
-  });
-
-  // Store expense ID for saving
-  expenseEditId.value = expenseId;
-
-  // Show that we're editing
-  addExpenseBtn.textContent = "Save";
-  addExpensePanel.classList.remove("hidden");
-  setMsg(expensesMsg, "Editing expense - change details and click Save", "warn");
 }
 
 // ---- members
@@ -2000,9 +1841,6 @@ itemsList.addEventListener("click", (e) => {
   if (action === "delete") {
     const itemId = btn.dataset.itemId;
     if (itemId) deleteItem(itemId);
-  } else if (action === "edit") {
-    const itemId = btn.dataset.itemId;
-    if (itemId) editItem(itemId);
   } else if (action === "moveup") {
     const itemId = btn.dataset.itemId;
     if (itemId) moveItemUp(itemId);
@@ -2017,8 +1855,6 @@ expensesList.addEventListener("click", (e) => {
   if (!btn) return;
   if (btn.dataset.action === "delete-expense") {
     deleteExpense(btn.dataset.expenseId);
-  } else if (btn.dataset.action === "edit-expense") {
-    editExpense(btn.dataset.expenseId);
   }
 });
 
