@@ -1432,15 +1432,19 @@ refreshBtn.addEventListener("click", () => {
   window.location.reload();
 });
 
-toggleCreateBtn.addEventListener("click", () => {
-  createPanel.classList.toggle("hidden");
-  joinPanel.classList.add("hidden");
-});
+if (toggleCreateBtn && createPanel) {
+  toggleCreateBtn.addEventListener("click", () => {
+    createPanel.classList.toggle("hidden");
+    joinPanel?.classList.add("hidden");
+  });
+}
 
-toggleJoinBtn.addEventListener("click", () => {
-  joinPanel.classList.toggle("hidden");
-  createPanel.classList.add("hidden");
-});
+if (toggleJoinBtn && joinPanel) {
+  toggleJoinBtn.addEventListener("click", () => {
+    joinPanel.classList.toggle("hidden");
+    createPanel?.classList.add("hidden");
+  });
+}
 
 toggleAddItemBtn.addEventListener("click", () => {
   addItemPanel.classList.toggle("hidden");
