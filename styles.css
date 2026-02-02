@@ -120,6 +120,13 @@ body {
 
 .topRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-top: 2px; }
 
+@media (max-width: 480px) {
+  .topbar { align-items: center; }
+  .brandName { font-size: 14px; }
+  .brandSub { display: none; }
+  .topRight { margin-top: 0; }
+}
+
 .layout { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 0 32px; }
 @media (min-width: 900px) {
   .layout { grid-template-columns: 1fr 1fr; margin: 0 32px; max-width: calc(1100px - 64px); }
