@@ -132,6 +132,7 @@ const activityLog = $("activityLog");
 const bottomBar = $("bottomBar");
 const navTrips = $("navTrips");
 const navTrip = $("navTrip");
+const bottomBarMenu = $("bottomBarMenu");
 
 // dialog
 const editDialog = $("editDialog");
@@ -297,7 +298,19 @@ async function loadTrips() {
   if (!trips.length) setMsg(tripsMsg, "No trips yet. Create one or join with a Trip ID.", "warn");
   else setMsg(tripsMsg, "", "");
 
-  for (const t of trips) {
+  // Sort chronologically: upcoming trips first, then past trips
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcoming = trips.filter((t) => t.start_date && new Date(t.start_date) >= today);
+  const past = trips.filter((t) => !t.start_date || new Date(t.start_date) < today);
+
+  // Sort upcoming by start_date ascending, past by start_date descending
+  upcoming.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+  past.sort((a, b) => new Date(b.start_date || 0) - new Date(a.start_date || 0));
+
+  // Render upcoming first, then past
+  for (const t of [...upcoming, ...past]) {
     tripsList.appendChild(renderTripTile(t));
   }
 }
@@ -1088,6 +1101,7 @@ function cleanupRealtime() {
 // ---- mobile nav
 function goTripsView() {
   hide(tripCard);
+  hide(bottomBarMenu);
   navTrip.disabled = !currentTrip;
   navTrips.classList.add("navActive");
   navTrip.classList.remove("navActive");
@@ -1096,6 +1110,7 @@ function goTripsView() {
 function goTripView() {
   if (!currentTrip) return;
   show(tripCard);
+  show(bottomBarMenu);
   navTrips.classList.remove("navActive");
   navTrip.classList.add("navActive");
 }
@@ -1123,6 +1138,11 @@ createPackingListBtn.addEventListener("click", createPackingList);
 
 navTrips.addEventListener("click", goTripsView);
 navTrip.addEventListener("click", goTripView);
+
+// Bottom menu tab switching
+document.querySelectorAll(".bottomBarMenu [data-tab]").forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
 
 // Tab navigation
 document.querySelectorAll(".tabBtn").forEach((btn) => {
