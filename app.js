@@ -1938,30 +1938,6 @@ packingListsContainer.addEventListener("click", (e) => {
   }
 });
 
-// ---- monuments carousel
-function initMonumentsCarousel() {
-  const carousel = document.getElementById("monumentsCarousel");
-  const track = document.querySelector(".monumentsTrack");
-  if (!track || !carousel) return;
-
-  const monuments = Array.from(track.children);
-  
-  // Randomize order
-  for (let i = monuments.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    track.appendChild(monuments[j]);
-  }
-  
-  // Duplicate monuments for seamless loop
-  monuments.forEach((monument) => {
-    const clone = monument.cloneNode(true);
-    track.appendChild(clone);
-  });
-  
-  // Show carousel
-  carousel.classList.remove("hidden");
-}
-
 // ---- init
 (async function init() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -1973,7 +1949,4 @@ function initMonumentsCarousel() {
     if (u) await signedInUI(u);
     else signedOutUI();
   });
-
-  // Initialize monuments carousel
-  initMonumentsCarousel();
 })();

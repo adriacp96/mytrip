@@ -329,44 +329,6 @@ h2 { font-size: 16px; }
 }
 .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
 
-.monumentsCarousel {
-  overflow: hidden;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto 24px;
-  height: 80px;
-  position: relative;
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-}
-
-.monumentsCarousel.hidden {
-  display: none;
-}
-
-.monumentsTrack {
-  display: flex;
-  gap: 24px;
-  animation: slideMonuments 30s linear infinite;
-}
-
-.monument {
-  width: 56px;
-  height: 56px;
-  opacity: 0.7;
-  flex-shrink: 0;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-}
-
-@keyframes slideMonuments {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
 .sectionTitle {
   font-size: 12px;
   color: var(--muted);
