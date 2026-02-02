@@ -16,6 +16,13 @@ const setMsg = (el, text, kind = "") => {
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shortId = (id) => String(id ?? "").split("-")[0];
+const qs = () => new URLSearchParams(window.location.search);
+const cleanUrl = () => {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("join");
+  url.searchParams.delete("trip");
+  history.replaceState({}, "", url.toString());
+};
 
 // ---- elements
 const authCard = $("authCard");
@@ -40,6 +47,7 @@ const joinTripBtn = $("joinTripBtn");
 const tripHeading = $("tripHeading");
 const tripIdBadge = $("tripIdBadge");
 const copyTripIdBtn = $("copyTripIdBtn");
+const copyJoinLinkBtn = $("copyJoinLinkBtn");
 const closeTripBtn = $("closeTripBtn");
 
 const itemDate = $("itemDate");
@@ -48,6 +56,21 @@ const itemLocation = $("itemLocation");
 const itemNotes = $("itemNotes");
 const addItemBtn = $("addItemBtn");
 const itemsList = $("itemsList");
+
+const bottomBar = $("bottomBar");
+const navTrips = $("navTrips");
+const navTrip = $("navTrip");
+
+// dialog
+const editDialog = $("editDialog");
+const editId = $("editId");
+const editDate = $("editDate");
+const editTitle = $("editTitle");
+const editLocation = $("editLocation");
+const editNotes = $("editNotes");
+const editMsg = $("editMsg");
+const saveEditBtn = $("saveEditBtn");
+const deleteItemBtn = $("deleteItemBtn");
 
 // ---- state
 let currentUser = null;
@@ -89,6 +112,11 @@ function signedOutUI() {
   hide(tripCard);
   hide(logoutBtn);
   hide(userBadge);
+  hide(bottomBar);
+
+  navTrip.disabled = true;
+  navTrips.classList.add("navActive");
+  navTrip.classList.remove("navActive");
 
   setMsg(authMsg, "", "");
   setMsg(tripsMsg, "", "");
@@ -105,10 +133,51 @@ async function signedInUI(user) {
   show(appCard);
   show(logoutBtn);
   show(userBadge);
+  show(bottomBar);
 
   userBadge.textContent = user.email || shortId(user.id);
 
+  await handleDeepLinks();
   await loadTrips();
+}
+
+// ---- deep links: ?join=TRIP_ID or ?trip=TRIP_ID
+async function handleDeepLinks() {
+  const params = qs();
+  const join = params.get("join");
+  const trip = params.get("trip");
+
+  if (join) {
+    // best effort join; if already member, ignore error
+    setMsg(tripsMsg, "Joining from link…", "warn");
+    await supabase.from("trip_members").insert({
+      trip_id: join,
+      user_id: currentUser.id,
+      role: "editor",
+    });
+    // open it
+    const t = await fetchTrip(join);
+    if (t) await openTrip(t);
+    cleanUrl();
+    return;
+  }
+
+  if (trip) {
+    const t = await fetchTrip(trip);
+    if (t) await openTrip(t);
+    cleanUrl();
+  }
+}
+
+async function fetchTrip(tripId) {
+  const { data, error } = await supabase
+    .from("trips")
+    .select("id,title,start_date,end_date,created_at,owner_id")
+    .eq("id", tripId)
+    .limit(1);
+
+  if (error) return null;
+  return data?.[0] || null;
 }
 
 // ---- trips
@@ -147,6 +216,10 @@ function renderTripTile(t) {
       </div>
       <div class="pill accent">${esc(t.my_role || "member")}</div>
     </div>
+    <div class="pills">
+      <span class="pill">Open</span>
+      <span class="pill">Share via Join Link</span>
+    </div>
   `;
   el.addEventListener("click", () => openTrip(t));
   return el;
@@ -162,7 +235,7 @@ async function createTrip() {
   const { data: tripRows, error: tripErr } = await supabase
     .from("trips")
     .insert({ owner_id: currentUser.id, title })
-    .select("id,title")
+    .select("id,title,start_date,end_date,created_at,owner_id")
     .limit(1);
 
   if (tripErr) {
@@ -170,7 +243,8 @@ async function createTrip() {
     return setMsg(tripsMsg, tripErr.message, "bad");
   }
 
-  const tripId = tripRows?.[0]?.id;
+  const trip = tripRows?.[0];
+  const tripId = trip?.id;
 
   const { error: memErr } = await supabase.from("trip_members").insert({
     trip_id: tripId,
@@ -183,8 +257,9 @@ async function createTrip() {
   if (memErr) return setMsg(tripsMsg, memErr.message, "bad");
 
   tripTitle.value = "";
-  setMsg(tripsMsg, "Trip created. Share the Trip ID with friends.", "ok");
+  setMsg(tripsMsg, "Trip created. Open it and copy the join link.", "ok");
   await loadTrips();
+  if (trip) await openTrip(trip);
 }
 
 async function joinTrip() {
@@ -205,8 +280,10 @@ async function joinTrip() {
   if (error) return setMsg(tripsMsg, error.message, "bad");
 
   joinTripId.value = "";
-  setMsg(tripsMsg, "Joined. Loading…", "ok");
+  setMsg(tripsMsg, "Joined. Opening trip…", "ok");
+  const t = await fetchTrip(tripId);
   await loadTrips();
+  if (t) await openTrip(t);
 }
 
 // ---- trip details
@@ -217,6 +294,11 @@ async function openTrip(t) {
   tripIdBadge.textContent = `Trip ID: ${t.id}`;
 
   show(tripCard);
+  navTrip.disabled = false;
+
+  // mobile nav state
+  navTrips.classList.remove("navActive");
+  navTrip.classList.add("navActive");
 
   await loadItems();
   setupRealtime();
@@ -228,12 +310,25 @@ function closeTrip() {
   hide(tripCard);
   itemsList.innerHTML = "";
   setMsg(itemsMsg, "", "");
+
+  // mobile nav state
+  navTrip.disabled = true;
+  navTrips.classList.add("navActive");
+  navTrip.classList.remove("navActive");
 }
 
 async function copyTripId() {
   if (!currentTrip?.id) return;
   await navigator.clipboard.writeText(currentTrip.id);
   setMsg(itemsMsg, "Trip ID copied.", "ok");
+}
+
+async function copyJoinLink() {
+  if (!currentTrip?.id) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set("join", currentTrip.id);
+  await navigator.clipboard.writeText(url.toString());
+  setMsg(itemsMsg, "Join link copied. Send it to your friends.", "ok");
 }
 
 async function addItem() {
@@ -296,6 +391,8 @@ async function loadItems() {
 function renderItemTile(it) {
   const el = document.createElement("div");
   el.className = "tile";
+  el.dataset.itemId = it.id;
+
   const date = it.day_date ? esc(it.day_date) : "No date";
   const loc = it.location ? esc(it.location) : "No location";
   const updated = it.updated_at ? new Date(it.updated_at).toLocaleString() : "";
@@ -306,12 +403,91 @@ function renderItemTile(it) {
         <div class="tileTitle">${esc(it.title)}</div>
         <div class="tileMeta">${date} · ${loc}</div>
       </div>
-      <div class="pill">${esc(shortId(it.id))}</div>
+      <div class="pills" style="margin-top:0;">
+        <button class="pill" data-action="edit" type="button">Edit</button>
+      </div>
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
-    ${updated ? `<div class="pills"><span class="pill">Updated: ${esc(updated)}</span></div>` : ""}
+    ${updated ? `<div class="pills"><span class="pill">Updated: ${esc(updated)}</span><span class="pill">${esc(shortId(it.id))}</span></div>` : ""}
   `;
+
   return el;
+}
+
+// ---- edit/delete
+async function openEditDialog(itemId) {
+  if (!currentTrip) return;
+
+  setMsg(editMsg, "", "");
+
+  const { data, error } = await supabase
+    .from("itinerary_items")
+    .select("id,day_date,title,location,notes")
+    .eq("id", itemId)
+    .limit(1);
+
+  if (error) return setMsg(itemsMsg, error.message, "bad");
+
+  const it = data?.[0];
+  if (!it) return;
+
+  editId.value = it.id;
+  editDate.value = it.day_date || "";
+  editTitle.value = it.title || "";
+  editLocation.value = it.location || "";
+  editNotes.value = it.notes || "";
+
+  editDialog.showModal();
+}
+
+async function saveEdit() {
+  const id = editId.value;
+  if (!id) return;
+
+  const payload = {
+    day_date: editDate.value || null,
+    title: (editTitle.value || "").trim(),
+    location: (editLocation.value || "").trim() || null,
+    notes: (editNotes.value || "").trim() || null,
+    updated_by: currentUser.id,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!payload.title) return setMsg(editMsg, "Title required.", "warn");
+
+  saveEditBtn.disabled = true;
+  setMsg(editMsg, "Saving…", "warn");
+
+  const { error } = await supabase.from("itinerary_items").update(payload).eq("id", id);
+
+  saveEditBtn.disabled = false;
+
+  if (error) return setMsg(editMsg, error.message, "bad");
+
+  setMsg(editMsg, "Saved.", "ok");
+  editDialog.close();
+  await loadItems();
+}
+
+async function deleteItem() {
+  const id = editId.value;
+  if (!id) return;
+
+  const ok = confirm("Delete this item? This cannot be undone.");
+  if (!ok) return;
+
+  deleteItemBtn.disabled = true;
+  setMsg(editMsg, "Deleting…", "warn");
+
+  const { error } = await supabase.from("itinerary_items").delete().eq("id", id);
+
+  deleteItemBtn.disabled = false;
+
+  if (error) return setMsg(editMsg, error.message, "bad");
+
+  setMsg(editMsg, "Deleted.", "ok");
+  editDialog.close();
+  await loadItems();
 }
 
 // ---- realtime
@@ -336,6 +512,21 @@ function cleanupRealtime() {
   }
 }
 
+// ---- navigation (mobile)
+function goTripsView() {
+  // trips card always visible when signed in
+  hide(tripCard);
+  navTrip.disabled = !currentTrip;
+  navTrips.classList.add("navActive");
+  navTrip.classList.remove("navActive");
+}
+function goTripView() {
+  if (!currentTrip) return;
+  show(tripCard);
+  navTrips.classList.remove("navActive");
+  navTrip.classList.add("navActive");
+}
+
 // ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
@@ -345,8 +536,30 @@ joinTripBtn.addEventListener("click", joinTrip);
 
 closeTripBtn.addEventListener("click", closeTrip);
 copyTripIdBtn.addEventListener("click", copyTripId);
+copyJoinLinkBtn.addEventListener("click", copyJoinLink);
 
 addItemBtn.addEventListener("click", addItem);
+
+navTrips.addEventListener("click", goTripsView);
+navTrip.addEventListener("click", goTripView);
+
+saveEditBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  saveEdit();
+});
+deleteItemBtn.addEventListener("click", deleteItem);
+
+// delegate edit button clicks
+itemsList.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const tile = btn.closest(".tile");
+  const itemId = tile?.dataset?.itemId;
+  if (!itemId) return;
+
+  if (action === "edit") openEditDialog(itemId);
+});
 
 // ---- init
 (async function init() {
