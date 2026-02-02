@@ -330,6 +330,12 @@ h2 { font-size: 16px; }
   transition: transform .08s ease, border-color .08s ease;
 }
 .tile:hover { transform: translateY(-1px); border-color: var(--line2); }
+.tile[draggable="true"] {
+  cursor: grab;
+}
+.tile[draggable="true"]:active {
+  cursor: grabbing;
+}
 .tile.swipeable {
   touch-action: pan-y;
   transition: transform .12s ease, border-color .12s ease;

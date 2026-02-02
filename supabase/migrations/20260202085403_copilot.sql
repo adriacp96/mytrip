@@ -30,6 +30,7 @@ CREATE TABLE itinerary_items (
   location TEXT,
   notes TEXT,
   category TEXT DEFAULT 'activity',
+  order_seq INT DEFAULT 0,
   updated_by UUID NOT NULL REFERENCES auth.users(id),
   updated_at TIMESTAMP DEFAULT now(),
   created_at TIMESTAMP DEFAULT now()

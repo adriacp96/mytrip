@@ -139,7 +139,8 @@
 
             <!-- ITINERARY TAB -->
             <div id="tabContentItinerary" class="tabContent">
-              <div class="panel">
+              <button id="toggleAddItemBtn" class="btn soft" style="margin-bottom: 12px;">+ Add Item</button>
+              <div id="addItemPanel" class="panel hidden">
                 <div class="panelTitle">Add itinerary item</div>
 
                 <div class="grid2">
@@ -189,7 +190,8 @@
 
             <!-- EXPENSES TAB -->
             <div id="tabContentExpenses" class="tabContent hidden">
-              <div class="panel">
+              <button id="toggleAddExpenseBtn" class="btn soft" style="margin-bottom: 12px;">+ Add Expense</button>
+              <div id="addExpensePanel" class="panel hidden">
                 <div class="panelTitle">Add expense</div>
 
                 <div class="grid2">
@@ -251,7 +253,8 @@
 
             <!-- PACKING TAB -->
             <div id="tabContentPacking" class="tabContent hidden">
-              <div class="panel">
+              <button id="togglePackingBtn" class="btn soft" style="margin-bottom: 12px;">+ Create Packing List</button>
+              <div id="addPackingPanel" class="panel hidden">
                 <div class="panelTitle">Create packing list</div>
                 <div class="row">
                   <input id="packingListTitle" class="input" placeholder="Packing list name" />

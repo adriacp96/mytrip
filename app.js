@@ -89,6 +89,13 @@ const joinTripBtn = $("joinTripBtn");
 const toggleJoinBtn = $("toggleJoinBtn");
 const joinPanel = $("joinPanel");
 
+const toggleAddItemBtn = $("toggleAddItemBtn");
+const addItemPanel = $("addItemPanel");
+const toggleAddExpenseBtn = $("toggleAddExpenseBtn");
+const addExpensePanel = $("addExpensePanel");
+const togglePackingBtn = $("togglePackingBtn");
+const addPackingPanel = $("addPackingPanel");
+
 const tripHeading = $("tripHeading");
 const tripRange = $("tripRange");
 const tripIdBadge = $("tripIdBadge");
@@ -168,6 +175,7 @@ let currentTrip = null;      // full trip row
 let currentRole = null;      // owner/editor/viewer
 let realtimeChannel = null;
 let userCache = {};          // cache for user info
+let draggedItem = null;      // for drag-and-drop reordering
 
 // ---- auth
 let authMode = "signin"; // "signin" or "signup"
@@ -638,6 +646,15 @@ async function addItem() {
 
   if (!title) return setMsg(itemsMsg, "Title required.", "warn");
 
+  // Get the next order_seq for this date
+  const { data: existingItems } = await supabase
+    .from("itinerary_items")
+    .select("order_seq")
+    .eq("trip_id", currentTrip.id)
+    .eq("day_date", day_date);
+
+  const nextOrder = (existingItems?.length || 0);
+
   addItemBtn.disabled = true;
   setMsg(itemsMsg, "Adding…", "warn");
 
@@ -648,6 +665,7 @@ async function addItem() {
     location,
     notes,
     category,
+    order_seq: nextOrder,
     updated_by: currentUser.id,
   });
 
@@ -674,30 +692,34 @@ async function loadItems() {
 
   const { data, error } = await supabase
     .from("itinerary_items")
-    .select("id,day_date,title,location,notes,category,updated_at")
+    .select("id,day_date,title,location,notes,category,order_seq,updated_at")
     .eq("trip_id", currentTrip.id)
     .order("day_date", { ascending: true })
-    .order("updated_at", { ascending: false });
+    .order("order_seq", { ascending: true });
 
   if (error) return setMsg(itemsMsg, error.message, "bad");
 
   if (!data?.length) setMsg(itemsMsg, "No items yet. Add one.", "warn");
   else setMsg(itemsMsg, "", "");
 
-  for (const it of data) {
-    itemsList.appendChild(renderItemTile(it));
+  for (let i = 0; i < data.length; i++) {
+    itemsList.appendChild(renderItemTile(data[i], i, data.length));
   }
 }
 
-function renderItemTile(it) {
+function renderItemTile(it, index, total) {
   const el = document.createElement("div");
   el.className = "tile";
   el.dataset.itemId = it.id;
+  el.draggable = true;
 
   const date = it.day_date ? esc(it.day_date) : "No date";
   const loc = it.location ? esc(it.location) : "No location";
   const updated = it.updated_at ? new Date(it.updated_at).toLocaleString() : "";
   const icon = getCategoryIcon(it.category);
+  
+  const canMoveUp = index > 0;
+  const canMoveDown = index < total - 1;
 
   el.innerHTML = `
     <div class="tileTop">
@@ -708,11 +730,172 @@ function renderItemTile(it) {
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
     <div class="pills">
+      ${canMoveUp ? `<button class="btn ghost small" data-action="moveup" data-item-id="${esc(it.id)}" type="button">↑ Up</button>` : ""}
+      ${canMoveDown ? `<button class="btn ghost small" data-action="movedown" data-item-id="${esc(it.id)}" type="button">Down ↓</button>` : ""}
       <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button">Delete</button>
     </div>
   `;
 
+  // Drag and drop handlers
+  el.addEventListener("dragstart", (e) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/html", el.innerHTML);
+    el.style.opacity = "0.5";
+    draggedItem = it.id;
+  });
+
+  el.addEventListener("dragend", (e) => {
+    el.style.opacity = "1";
+  });
+
+  el.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (e.target.closest(".tile") && e.target.closest(".tile") !== el) {
+      el.style.borderTop = "2px solid #68b3d7";
+    }
+  });
+
+  el.addEventListener("dragleave", (e) => {
+    el.style.borderTop = "none";
+  });
+
+  el.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    el.style.borderTop = "none";
+    if (draggedItem && draggedItem !== it.id) {
+      await reorderItems(draggedItem, it.id);
+    }
+  });
+
   return el;
+}
+
+async function reorderItems(draggedId, targetId) {
+  if (!currentTrip) return;
+
+  // Fetch all items for the trip
+  const { data: allItems, error: fetchError } = await supabase
+    .from("itinerary_items")
+    .select("id,order_seq,day_date")
+    .eq("trip_id", currentTrip.id)
+    .order("day_date", { ascending: true })
+    .order("order_seq", { ascending: true });
+
+  if (fetchError) {
+    setMsg(itemsMsg, fetchError.message, "bad");
+    return;
+  }
+
+  // Find indices
+  const draggedIdx = allItems.findIndex((x) => x.id === draggedId);
+  const targetIdx = allItems.findIndex((x) => x.id === targetId);
+
+  if (draggedIdx === -1 || targetIdx === -1) return;
+
+  // Swap in the array
+  [allItems[draggedIdx], allItems[targetIdx]] = [allItems[targetIdx], allItems[draggedIdx]];
+
+  // Update all items with new order_seq
+  const updates = allItems.map((item, idx) => ({
+    id: item.id,
+    order_seq: idx,
+  }));
+
+  // Batch update
+  for (const update of updates) {
+    const { error } = await supabase
+      .from("itinerary_items")
+      .update({ order_seq: update.order_seq })
+      .eq("id", update.id);
+
+    if (error) {
+      setMsg(itemsMsg, error.message, "bad");
+      return;
+    }
+  }
+
+  // Reload the list
+  await loadItems();
+}
+
+async function moveItemUp(itemId) {
+  if (!currentTrip) return;
+
+  // Fetch all items for the trip with same date
+  const { data: item, error: itemError } = await supabase
+    .from("itinerary_items")
+    .select("id,order_seq,day_date")
+    .eq("id", itemId)
+    .limit(1);
+
+  if (itemError || !item?.[0]) return;
+
+  const currentItem = item[0];
+
+  const { data: allItems, error: fetchError } = await supabase
+    .from("itinerary_items")
+    .select("id,order_seq,day_date")
+    .eq("trip_id", currentTrip.id)
+    .eq("day_date", currentItem.day_date)
+    .order("order_seq", { ascending: true });
+
+  if (fetchError) return;
+
+  const idx = allItems.findIndex((x) => x.id === itemId);
+  if (idx <= 0) return; // Already first
+
+  // Swap with previous
+  [allItems[idx - 1].order_seq, allItems[idx].order_seq] = [allItems[idx].order_seq, allItems[idx - 1].order_seq];
+
+  // Update both items
+  for (const itm of [allItems[idx - 1], allItems[idx]]) {
+    await supabase
+      .from("itinerary_items")
+      .update({ order_seq: itm.order_seq })
+      .eq("id", itm.id);
+  }
+
+  await loadItems();
+}
+
+async function moveItemDown(itemId) {
+  if (!currentTrip) return;
+
+  const { data: item, error: itemError } = await supabase
+    .from("itinerary_items")
+    .select("id,order_seq,day_date")
+    .eq("id", itemId)
+    .limit(1);
+
+  if (itemError || !item?.[0]) return;
+
+  const currentItem = item[0];
+
+  const { data: allItems, error: fetchError } = await supabase
+    .from("itinerary_items")
+    .select("id,order_seq,day_date")
+    .eq("trip_id", currentTrip.id)
+    .eq("day_date", currentItem.day_date)
+    .order("order_seq", { ascending: true });
+
+  if (fetchError) return;
+
+  const idx = allItems.findIndex((x) => x.id === itemId);
+  if (idx >= allItems.length - 1) return; // Already last
+
+  // Swap with next
+  [allItems[idx].order_seq, allItems[idx + 1].order_seq] = [allItems[idx + 1].order_seq, allItems[idx].order_seq];
+
+  // Update both items
+  for (const itm of [allItems[idx], allItems[idx + 1]]) {
+    await supabase
+      .from("itinerary_items")
+      .update({ order_seq: itm.order_seq })
+      .eq("id", itm.id);
+  }
+
+  await loadItems();
 }
 
 async function openEditDialog(itemId) {
@@ -1199,6 +1382,18 @@ toggleJoinBtn.addEventListener("click", () => {
   createPanel.classList.add("hidden");
 });
 
+toggleAddItemBtn.addEventListener("click", () => {
+  addItemPanel.classList.toggle("hidden");
+});
+
+toggleAddExpenseBtn.addEventListener("click", () => {
+  addExpensePanel.classList.toggle("hidden");
+});
+
+togglePackingBtn.addEventListener("click", () => {
+  addPackingPanel.classList.toggle("hidden");
+});
+
 a2hsClose.addEventListener("click", () => {
   localStorage.setItem("a2hsDismissed", "1");
   a2hsOverlay.classList.add("hidden");
@@ -1256,6 +1451,12 @@ itemsList.addEventListener("click", (e) => {
   if (action === "delete") {
     const itemId = btn.dataset.itemId;
     if (itemId) deleteItem(itemId);
+  } else if (action === "moveup") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) moveItemUp(itemId);
+  } else if (action === "movedown") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) moveItemDown(itemId);
   }
 });
 
