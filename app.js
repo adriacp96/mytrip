@@ -129,11 +129,6 @@ const saveTripBtn = $("saveTripBtn");
 const deleteTripBtn = $("deleteTripBtn");
 const activityLog = $("activityLog");
 
-const bottomBar = $("bottomBar");
-const navTrips = $("navTrips");
-const navTrip = $("navTrip");
-const bottomBarTabs = $("bottomBarTabs");
-
 // dialog
 const editDialog = $("editDialog");
 const editId = $("editId");
@@ -207,12 +202,8 @@ function signedOutUI() {
   hide(tripCard);
   hide(logoutBtn);
   hide(userBtn);
-  hide(bottomBar);
+  
   document.querySelector(".topbar").classList.add("hidden");
-
-  navTrip.disabled = true;
-  navTrips.classList.add("navActive");
-  navTrip.classList.remove("navActive");
 
   setMsg(authMsg, "", "");
   setMsg(tripsMsg, "", "");
@@ -231,8 +222,6 @@ async function signedInUI(user) {
   show(logoutBtn);
   show(userBtn);
   document.querySelector(".topbar").classList.remove("hidden");
-  show(bottomBar);
-
   userBtn.title = user.email;
 
   await handleDeepLinks();
@@ -446,11 +435,6 @@ async function openTripById(tripId) {
   else setMsg(tripMsg, "", "");
 
   show(tripCard);
-  show(bottomBarTabs);
-  navTrip.disabled = false;
-  navTrips.classList.remove("navActive");
-  navTrip.classList.add("navActive");
-
   // switch to itinerary tab by default
   switchTab("itinerary");
 
@@ -471,9 +455,6 @@ function closeTrip() {
   setMsg(itemsMsg, "", "");
   setMsg(tripMsg, "", "");
 
-  navTrip.disabled = true;
-  navTrips.classList.add("navActive");
-  navTrip.classList.remove("navActive");
 }
 
 // ---- tab navigation
@@ -1119,23 +1100,6 @@ function cleanupRealtime() {
   }
 }
 
-// ---- mobile nav
-function goTripsView() {
-  hide(tripCard);
-  hide(bottomBarTabs);
-  navTrip.disabled = !currentTrip;
-  navTrips.classList.add("navActive");
-  navTrip.classList.remove("navActive");
-}
-
-function goTripView() {
-  if (!currentTrip) return;
-  show(tripCard);
-  show(bottomBarTabs);
-  navTrips.classList.remove("navActive");
-  navTrip.classList.add("navActive");
-}
-
 // ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
@@ -1174,14 +1138,6 @@ deleteTripBtn.addEventListener("click", deleteTrip);
 addItemBtn.addEventListener("click", addItem);
 addExpenseBtn.addEventListener("click", addExpense);
 createPackingListBtn.addEventListener("click", createPackingList);
-
-navTrips.addEventListener("click", goTripsView);
-navTrip.addEventListener("click", goTripView);
-
-// Bottom menu tab switching
-document.querySelectorAll(".bottomBarMenu [data-tab]").forEach((btn) => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-});
 
 // Tab navigation
 document.querySelectorAll(".tabBtn").forEach((btn) => {
