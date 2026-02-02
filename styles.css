@@ -445,6 +445,9 @@ h2 { font-size: 18px; }
   position: fixed;
   inset: 0;
   z-index: 1;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .authContent {
