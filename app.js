@@ -1320,7 +1320,7 @@ async function loadMembers() {
   // Pre-fetch display names for all members
   const memberNames = {};
   for (const m of data) {
-    memberNames[m.user_id] = await getUserNameWithEmail(m.user_id);
+    memberNames[m.user_id] = await getUserDisplayName(m.user_id);
   }
 
   for (const member of data) {
