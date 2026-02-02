@@ -1167,21 +1167,37 @@ async function loadExpenses() {
 
   setMsg(expensesMsg, "", "");
 
+  // Load current user's share per expense (if split data exists)
+  const { data: mySplits } = await supabase
+    .from("expense_splits")
+    .select("expense_id, share_amount, expenses!inner(trip_id)")
+    .eq("user_id", currentUser.id)
+    .eq("expenses.trip_id", currentTrip.id);
+
+  const myShareMap = {};
+  (mySplits || []).forEach((s) => {
+    if (!myShareMap[s.expense_id]) myShareMap[s.expense_id] = 0;
+    myShareMap[s.expense_id] += s.share_amount || 0;
+  });
+
   // Render budget summary
-  budgetSummary.innerHTML = renderBudgetSummary(data, currentTrip.currency);
+  budgetSummary.innerHTML = renderBudgetSummary(data, currentTrip.currency, myShareMap);
 
   // Render expense tiles with display names
   for (const exp of data) {
     const paidByName = await getUserNameWithEmail(exp.paid_by);
-    expensesList.appendChild(renderExpenseTile(exp, paidByName));
+    const myShare = myShareMap[exp.id];
+    expensesList.appendChild(renderExpenseTile(exp, paidByName, myShare));
   }
 }
 
-function renderBudgetSummary(expenses, currency) {
+function renderBudgetSummary(expenses, currency, myShareMap = {}) {
   const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const myTotal = expenses
-    .filter(e => e.paid_by === currentUser.id)
-    .reduce((sum, e) => sum + (e.amount || 0), 0);
+  const myTotal = expenses.reduce((sum, e) => {
+    if (myShareMap[e.id] !== undefined) return sum + (myShareMap[e.id] || 0);
+    if (e.paid_by === currentUser.id) return sum + (e.amount || 0);
+    return sum;
+  }, 0);
 
   let html = `<div class="budgetGrid">`;
   html += `<div class="budgetCard"><div class="budgetLabel">Total spent</div><div class="budgetAmount">${fmtCurrency(total, currency)}</div></div>`;
@@ -1190,20 +1206,21 @@ function renderBudgetSummary(expenses, currency) {
   return html;
 }
 
-function renderExpenseTile(exp, paidByName) {
+function renderExpenseTile(exp, paidByName, myShare) {
   const el = document.createElement("div");
   el.className = "tile swipeable";
   el.dataset.expenseId = exp.id;
   el.style.position = "relative";
   const icon = getCategoryIcon(exp.category);
   const amount = fmtCurrency(exp.amount, exp.currency);
+  const shareText = fmtCurrency(myShare !== undefined ? myShare : exp.amount, exp.currency);
 
   el.innerHTML = `
     <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
-        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || shortId(exp.paid_by))}</div>
+        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || shortId(exp.paid_by))} for ${shareText}</div>
       </div>
       <div class="expenseAmount">${amount}</div>
     </div>
