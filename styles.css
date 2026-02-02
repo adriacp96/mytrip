@@ -553,21 +553,22 @@ h2 { font-size: 18px; }
 /* MOBILE BOTTOM BAR */
 .bottomBar {
   position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0;
+  padding: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px) saturate(140%);
-  box-shadow: 
-    0 8px 32px rgba(31, 38, 135, 0.2),
-    inset 0 2px 8px rgba(255, 255, 255, 0.2);
-  max-width: 1100px;
-  margin: 0 auto;
+  box-shadow: 0 -8px 32px rgba(31, 38, 135, 0.2);
+  max-width: 100%;
+  margin: 0;
   z-index: 999;
   overflow: hidden;
   position: relative;
