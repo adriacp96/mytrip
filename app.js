@@ -736,46 +736,77 @@ async function addItem() {
   const location = (itemLocation.value || "").trim() || null;
   const notes = (itemNotes.value || "").trim() || null;
   const category = (itemCategory.value || "activity").trim();
+  const editingId = itemEditId.value;
 
   if (!title) return setMsg(itemsMsg, "Title required.", "warn");
-
-  // Get the next order_seq for this date
-  const { data: existingItems } = await supabase
-    .from("itinerary_items")
-    .select("order_seq")
-    .eq("trip_id", currentTrip.id)
-    .eq("day_date", day_date);
-
-  const nextOrder = (existingItems?.length || 0);
+  if (!day_date) return setMsg(itemsMsg, "Date required.", "warn");
 
   addItemBtn.disabled = true;
-  setMsg(itemsMsg, "Adding…", "warn");
+  setMsg(itemsMsg, editingId ? "Updating…" : "Adding…", "warn");
 
-  const { error } = await supabase.from("itinerary_items").insert({
-    trip_id: currentTrip.id,
-    day_date,
-    title,
-    location,
-    notes,
-    category,
-    order_seq: nextOrder,
-    updated_by: currentUser.id,
-  });
+  let error;
+
+  // If editing, update the existing item
+  if (editingId) {
+    const result = await supabase
+      .from("itinerary_items")
+      .update({
+        title,
+        day_date,
+        location,
+        notes,
+        category,
+        updated_by: currentUser.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingId);
+    error = result.error;
+  } else {
+    // Get the next order_seq for this date
+    const { data: existingItems } = await supabase
+      .from("itinerary_items")
+      .select("order_seq")
+      .eq("trip_id", currentTrip.id)
+      .eq("day_date", day_date);
+
+    const nextOrder = (existingItems?.length || 0);
+
+    // Create new item
+    const result = await supabase.from("itinerary_items").insert({
+      trip_id: currentTrip.id,
+      day_date,
+      title,
+      location,
+      notes,
+      category,
+      order_seq: nextOrder,
+      updated_by: currentUser.id,
+    });
+    error = result.error;
+  }
 
   addItemBtn.disabled = false;
 
   if (error) return setMsg(itemsMsg, error.message, "bad");
+
+  addItemBtn.textContent = "Add item";
+  setMsg(itemsMsg, editingId ? "Updated." : "Added.", "ok");
 
   itemDate.value = "";
   itemTitle.value = "";
   itemLocation.value = "";
   itemNotes.value = "";
   itemCategory.value = "activity";
+  itemEditId.value = "";
+  addItemPanel.classList.add("hidden");
 
-  setMsg(itemsMsg, "Added.", "ok");
+  // Reset panel title
+  const panelTitle = addItemPanel.querySelector(".panelTitle");
+  panelTitle.textContent = "Add itinerary item";
+
   await logActivity(currentTrip.id, "added_item", { title, category });
   await loadItems();
-}
+}}
 
 async function loadItems() {
   if (!currentTrip) return;
@@ -1076,20 +1107,24 @@ async function editItem(itemId) {
 
   const item = data[0];
 
-  // Populate the edit form
-  editId.value = item.id;
-  editTitle.value = item.title || "";
-  editDate.value = item.day_date || "";
-  editLocation.value = item.location || "";
-  editNotes.value = item.notes || "";
-  editCategory.value = item.category || "general";
+  // Populate the add form with item data
+  itemTitle.value = item.title || "";
+  itemDate.value = item.day_date || "";
+  itemLocation.value = item.location || "";
+  itemNotes.value = item.notes || "";
+  itemCategory.value = item.category || "activity";
 
-  // Show save button with proper text
-  saveEditBtn.textContent = "Save";
-  saveEditBtn.disabled = false;
+  // Store item ID for saving
+  itemEditId.value = itemId;
 
-  // Open edit dialog
-  editDialog.showModal();
+  // Update panel title and button
+  const panelTitle = addItemPanel.querySelector(".panelTitle");
+  panelTitle.textContent = "EDIT ITINERARY ITEM";
+  addItemBtn.textContent = "Save";
+
+  // Show the panel
+  addItemPanel.classList.remove("hidden");
+  setMsg(itemsMsg, "Editing item - change details and click Save", "warn");
 }
 
 // ---- expenses
