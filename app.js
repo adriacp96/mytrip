@@ -815,8 +815,8 @@ function renderItemTile(it, index, total) {
   const canMoveDown = index < total - 1;
 
   el.innerHTML = `
-    <button class="btn ghost small" data-action="edit" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 48px; padding: 4px 8px; font-size: 16px; line-height: 1;">✎</button>
-    <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
+    <button class="btn ghost small" data-action="edit" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 48px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fbbf24;">✎</button>
+    <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fb7185;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(it.title)}</div>
