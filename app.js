@@ -1,331 +1,151 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ✅ TODO: paste from Supabase project settings
-const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
+const SUPABASE_URL = "https://upzbngnbkkbnpfcxguer.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemJuZ25ia2tibnBmY3hndWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwMTQxNjUsImV4cCI6MjA4NTU5MDE2NX0.yieZV7iL-lS361emD4tMHuXZyss_axulIalFPnFnltk";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ---------- UI helpers ----------
 const $ = (id) => document.getElementById(id);
-const show = (el) => el.classList.remove("hidden");
-const hide = (el) => el.classList.add("hidden");
-const msg = (el, text, kind = "") => {
-  el.textContent = text || "";
-  el.className = "msg" + (kind ? ` ${kind}` : "");
+
+let user = null;
+let currentTrip = null;
+let channel = null;
+
+/* AUTH */
+$("loginBtn").onclick = async () => {
+  const email = $("email").value;
+  await supabase.auth.signInWithOtp({
+    email,
+    options:{ emailRedirectTo: location.href }
+  });
+  $("authMsg").textContent = "Check your email.";
 };
 
-const authCard = $("authCard");
-const appCard = $("appCard");
-const tripCard = $("tripCard");
-
-const loginBtn = $("loginBtn");
-const logoutBtn = $("logoutBtn");
-const authMsg = $("authMsg");
-const tripsMsg = $("tripsMsg");
-const itemsMsg = $("itemsMsg");
-
-const userBadge = $("userBadge");
-
-const tripsList = $("tripsList");
-const createTripBtn = $("createTripBtn");
-const tripTitle = $("tripTitle");
-
-const closeTripBtn = $("closeTripBtn");
-const tripHeading = $("tripHeading");
-const tripSub = $("tripSub");
-const itemsList = $("itemsList");
-
-const addItemBtn = $("addItemBtn");
-const itemDate = $("itemDate");
-const itemTitle = $("itemTitle");
-const itemLocation = $("itemLocation");
-const itemNotes = $("itemNotes");
-
-// ---------- state ----------
-let currentUser = null;
-let currentTrip = null;
-let realtimeChannel = null;
-
-// ---------- auth ----------
-async function sendMagicLink() {
-  const email = $("email").value.trim();
-  if (!email) return msg(authMsg, "Enter an email.", "warn");
-
-  loginBtn.disabled = true;
-  msg(authMsg, "Sending magic link…", "warn");
-
-  // GitHub Pages redirect: uses current origin + path
-  const redirectTo = window.location.href.split("#")[0];
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: redirectTo },
-  });
-
-  loginBtn.disabled = false;
-
-  if (error) return msg(authMsg, error.message, "bad");
-  msg(authMsg, "Check your email for the sign-in link.", "ok");
-}
-
-async function logOut() {
+$("logoutBtn").onclick = async () => {
   await supabase.auth.signOut();
-}
+};
 
-function setSignedOutUI() {
-  currentUser = null;
-  currentTrip = null;
-  cleanupRealtime();
+/* SESSION */
+supabase.auth.onAuthStateChange((_e,s)=>{
+  user = s?.user || null;
+  updateUI();
+});
 
-  show(authCard);
-  hide(appCard);
-  hide(tripCard);
-  hide(logoutBtn);
-  hide(userBadge);
-
-  msg(authMsg, "", "");
-  msg(tripsMsg, "", "");
-  msg(itemsMsg, "", "");
-
-  tripsList.innerHTML = "";
-  itemsList.innerHTML = "";
-}
-
-async function setSignedInUI(user) {
-  currentUser = user;
-
-  hide(authCard);
-  show(appCard);
-  show(logoutBtn);
-  show(userBadge);
-
-  userBadge.textContent = user.email || user.id;
-
-  await loadTrips();
-}
-
-// ---------- data ----------
-async function loadTrips() {
-  msg(tripsMsg, "Loading trips…", "warn");
-  tripsList.innerHTML = "";
-
-  // Simple version: trips are owned by you (no sharing yet).
-  // We'll add collaboration via trip_members next.
-  const { data, error } = await supabase
-    .from("trips")
-    .select("id,title,start_date,end_date,created_at")
-    .eq("owner_id", currentUser.id)
-    .order("created_at", { ascending: false });
-
-  if (error) return msg(tripsMsg, error.message, "bad");
-  msg(tripsMsg, data.length ? "" : "No trips yet. Create one.", "warn");
-
-  for (const t of data) {
-    tripsList.appendChild(renderTripRow(t));
+async function updateUI(){
+  if(!user){
+    $("authCard").classList.remove("hidden");
+    $("appCard").classList.add("hidden");
+    $("tripCard").classList.add("hidden");
+    return;
   }
+  $("authCard").classList.add("hidden");
+  $("appCard").classList.remove("hidden");
+  $("userBadge").classList.remove("hidden");
+  $("logoutBtn").classList.remove("hidden");
+  $("userBadge").textContent = user.email;
+  loadTrips();
 }
 
-function renderTripRow(t) {
-  const el = document.createElement("div");
-  el.className = "item";
-  el.innerHTML = `
-    <div class="title">${escapeHtml(t.title)}</div>
-    <div class="sub">${formatDateRange(t.start_date, t.end_date)}</div>
-    <div class="meta">
-      <span class="pill">Open</span>
-      <span class="pill">${shortId(t.id)}</span>
-    </div>
-  `;
-  el.style.cursor = "pointer";
-  el.addEventListener("click", () => openTrip(t));
-  return el;
-}
+/* TRIPS */
+$("createTripBtn").onclick = async () => {
+  const title = $("tripTitle").value;
+  const { data } = await supabase.from("trips")
+    .insert({ title, owner_id:user.id })
+    .select().single();
 
-async function createTrip() {
-  const title = tripTitle.value.trim();
-  if (!title) return msg(tripsMsg, "Trip title required.", "warn");
+  await supabase.from("trip_members")
+    .insert({ trip_id:data.id, user_id:user.id, role:"owner" });
 
-  createTripBtn.disabled = true;
-  msg(tripsMsg, "Creating…", "warn");
+  $("tripTitle").value="";
+  loadTrips();
+};
 
-  const { error } = await supabase.from("trips").insert({
-    owner_id: currentUser.id,
-    title,
+$("joinTripBtn").onclick = async ()=>{
+  const id = $("joinTripId").value;
+  await supabase.from("trip_members")
+    .insert({ trip_id:id, user_id:user.id, role:"editor" });
+  $("joinTripId").value="";
+  loadTrips();
+};
+
+async function loadTrips(){
+  const { data } = await supabase
+    .from("trip_members")
+    .select("role,trips(id,title)")
+    .eq("user_id",user.id);
+
+  $("tripsList").innerHTML="";
+  data.forEach(r=>{
+    const d=document.createElement("div");
+    d.className="item";
+    d.textContent=r.trips.title+" ("+r.role+")";
+    d.onclick=()=>openTrip(r.trips);
+    $("tripsList").appendChild(d);
   });
-
-  createTripBtn.disabled = false;
-
-  if (error) return msg(tripsMsg, error.message, "bad");
-
-  tripTitle.value = "";
-  msg(tripsMsg, "Trip created.", "ok");
-  await loadTrips();
 }
 
-async function openTrip(t) {
-  currentTrip = t;
+/* TRIP */
+$("closeTripBtn").onclick = ()=>{
+  $("tripCard").classList.add("hidden");
+  if(channel) supabase.removeChannel(channel);
+};
 
-  tripHeading.textContent = t.title;
-  tripSub.textContent = "Realtime itinerary (everyone in this trip will sync once sharing is enabled).";
-
-  show(tripCard);
-
-  await loadItems();
-  setupRealtime();
+function openTrip(t){
+  currentTrip=t;
+  $("tripCard").classList.remove("hidden");
+  $("tripHeading").textContent=t.title;
+  $("tripIdBadge").textContent=t.id;
+  loadItems();
+  subscribe();
 }
 
-async function closeTrip() {
-  currentTrip = null;
-  cleanupRealtime();
-  hide(tripCard);
-  itemsList.innerHTML = "";
-  msg(itemsMsg, "", "");
-}
+$("copyTripIdBtn").onclick=()=>{
+  navigator.clipboard.writeText(currentTrip.id);
+};
 
-async function loadItems() {
-  if (!currentTrip) return;
+$("addItemBtn").onclick=async()=>{
+  await supabase.from("itinerary_items").insert({
+    trip_id:currentTrip.id,
+    title:$("itemTitle").value,
+    location:$("itemLocation").value,
+    notes:$("itemNotes").value,
+    day_date:$("itemDate").value,
+    updated_by:user.id
+  });
+  $("itemTitle").value="";
+  $("itemLocation").value="";
+  $("itemNotes").value="";
+  loadItems();
+};
 
-  msg(itemsMsg, "Loading itinerary…", "warn");
-  itemsList.innerHTML = "";
-
-  const { data, error } = await supabase
+async function loadItems(){
+  const { data } = await supabase
     .from("itinerary_items")
-    .select("id,day_date,title,location,notes,updated_at")
-    .eq("trip_id", currentTrip.id)
-    .order("day_date", { ascending: true })
-    .order("updated_at", { ascending: false });
+    .select("*")
+    .eq("trip_id",currentTrip.id)
+    .order("updated_at",{ascending:false});
 
-  if (error) return msg(itemsMsg, error.message, "bad");
-
-  msg(itemsMsg, data.length ? "" : "No items yet. Add one.", "warn");
-  for (const it of data) {
-    itemsList.appendChild(renderItemRow(it));
-  }
-}
-
-function renderItemRow(it) {
-  const el = document.createElement("div");
-  el.className = "item";
-  el.innerHTML = `
-    <div class="title">${escapeHtml(it.title)}</div>
-    <div class="sub">
-      ${it.day_date ? escapeHtml(it.day_date) : "No date"} •
-      ${it.location ? escapeHtml(it.location) : "No location"}
-    </div>
-    ${it.notes ? `<div class="sub">${escapeHtml(it.notes)}</div>` : ""}
-    <div class="meta">
-      <span class="pill">${new Date(it.updated_at).toLocaleString()}</span>
-      <span class="pill">${shortId(it.id)}</span>
-    </div>
-  `;
-  return el;
-}
-
-async function addItem() {
-  if (!currentTrip) return;
-
-  const day_date = itemDate.value || null;
-  const title = itemTitle.value.trim();
-  const location = itemLocation.value.trim() || null;
-  const notes = itemNotes.value.trim() || null;
-
-  if (!title) return msg(itemsMsg, "Item title required.", "warn");
-
-  addItemBtn.disabled = true;
-  msg(itemsMsg, "Adding…", "warn");
-
-  const { error } = await supabase.from("itinerary_items").insert({
-    trip_id: currentTrip.id,
-    day_date,
-    title,
-    location,
-    notes,
-    updated_by: currentUser.id,
+  $("itemsList").innerHTML="";
+  data.forEach(i=>{
+    const d=document.createElement("div");
+    d.className="item";
+    d.textContent=i.title+" · "+(i.location||"");
+    $("itemsList").appendChild(d);
   });
-
-  addItemBtn.disabled = false;
-
-  if (error) return msg(itemsMsg, error.message, "bad");
-
-  itemTitle.value = "";
-  itemLocation.value = "";
-  itemNotes.value = "";
-
-  msg(itemsMsg, "Added. Syncing…", "ok");
-  await loadItems();
 }
 
-// ---------- realtime ----------
-function setupRealtime() {
-  cleanupRealtime();
-  if (!currentTrip) return;
-
-  realtimeChannel = supabase
-    .channel(`itinerary:${currentTrip.id}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "itinerary_items",
-        filter: `trip_id=eq.${currentTrip.id}`,
-      },
-      async () => {
-        // Somebody changed something -> refresh list
-        await loadItems();
-      }
-    )
-    .subscribe();
+/* REALTIME */
+function subscribe(){
+  if(channel) supabase.removeChannel(channel);
+  channel = supabase.channel("trip-"+currentTrip.id)
+    .on("postgres_changes",
+      {event:"*",schema:"public",table:"itinerary_items",filter:`trip_id=eq.${currentTrip.id}`},
+      loadItems
+    ).subscribe();
 }
 
-function cleanupRealtime() {
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel);
-    realtimeChannel = null;
-  }
-}
-
-// ---------- utils ----------
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }[c]));
-}
-function shortId(id) {
-  return String(id).split("-")[0];
-}
-function formatDateRange(a, b) {
-  if (!a && !b) return "No dates set";
-  if (a && !b) return `From ${a}`;
-  if (!a && b) return `Until ${b}`;
-  return `${a} → ${b}`;
-}
-
-// ---------- wiring ----------
-loginBtn.addEventListener("click", sendMagicLink);
-logoutBtn.addEventListener("click", logOut);
-
-createTripBtn.addEventListener("click", createTrip);
-closeTripBtn.addEventListener("click", closeTrip);
-addItemBtn.addEventListener("click", addItem);
-
-// Restore session + listen for changes
-(async function init() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) {
-    await setSignedInUI(session.user);
-  } else {
-    setSignedOutUI();
-  }
-
-  supabase.auth.onAuthStateChange(async (_event, sessionNow) => {
-    const user = sessionNow?.user || null;
-    if (user) await setSignedInUI(user);
-    else setSignedOutUI();
-  });
+/* INIT */
+(async()=>{
+  const { data } = await supabase.auth.getSession();
+  user=data.session?.user||null;
+  updateUI();
 })();
