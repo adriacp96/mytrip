@@ -360,6 +360,14 @@ async function getUserEmail(userId) {
   return email;
 }
 
+async function getUserDisplayName(userId) {
+  const { data } = await supabase.auth.admin?.getUserById(userId);
+  const displayName = data?.user?.user_metadata?.display_name;
+  if (displayName) return displayName;
+  const email = data?.user?.email;
+  return email || shortId(userId);
+}
+
 // ---- trips
 async function loadTrips() {
   setMsg(tripsMsg, "Loading trips…", "warn");
@@ -1147,9 +1155,10 @@ async function loadExpenses() {
   // Render budget summary
   budgetSummary.innerHTML = renderBudgetSummary(data, currentTrip.currency);
 
-  // Render expense tiles
+  // Render expense tiles with display names
   for (const exp of data) {
-    expensesList.appendChild(renderExpenseTile(exp));
+    const paidByName = await getUserDisplayName(exp.paid_by);
+    expensesList.appendChild(renderExpenseTile(exp, paidByName));
   }
 }
 
@@ -1175,7 +1184,7 @@ function renderBudgetSummary(expenses, currency) {
   return html;
 }
 
-function renderExpenseTile(exp) {
+function renderExpenseTile(exp, paidByName) {
   const el = document.createElement("div");
   el.className = "tile swipeable";
   el.dataset.expenseId = exp.id;
@@ -1188,7 +1197,7 @@ function renderExpenseTile(exp) {
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
-        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(shortId(exp.paid_by))}</div>
+        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || shortId(exp.paid_by))}</div>
       </div>
       <div class="expenseAmount">${amount}</div>
     </div>
