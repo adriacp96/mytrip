@@ -359,6 +359,21 @@ async function loadTrips() {
 function renderTripTile(t) {
   const el = document.createElement("div");
   el.className = "tile";
+  
+  // Fetch total expenses for this trip
+  supabase
+    .from("expenses")
+    .select("amount")
+    .eq("trip_id", t.id)
+    .then(({ data, error }) => {
+      const total = data?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0;
+      const totalDisplay = total > 0 ? `${fmtCurrency(total, t.currency)}` : "No expenses";
+      const currencyPill = el.querySelector(".currency-pill");
+      if (currencyPill) {
+        currencyPill.textContent = totalDisplay;
+      }
+    });
+  
   el.innerHTML = `
     <div class="tileTop">
       <div>
@@ -369,7 +384,7 @@ function renderTripTile(t) {
       <div class="pill accent">${esc(t.my_role || "member")}</div>
     </div>
     <div class="pills">
-      <span class="pill">Currency: ${esc(t.currency || "AED")}</span>
+      <span class="pill currency-pill">Loading…</span>
       ${t.description ? `<span class="pill">Has notes</span>` : `<span class="pill">No notes</span>`}
     </div>
   `;
