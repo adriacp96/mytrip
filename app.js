@@ -356,6 +356,21 @@ async function loadTrips() {
   }
 }
 
+function getCountdown(startDate) {
+  if (!startDate) return "No date";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+  const diffTime = start - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  return `${diffDays} days`;
+}
+
 function renderTripTile(t) {
   const el = document.createElement("div");
   el.className = "tile";
@@ -381,7 +396,7 @@ function renderTripTile(t) {
         <div class="tileMeta">${esc(fmtRange(t.start_date, t.end_date))}</div>
         <div class="tileMeta">Trip ID: ${esc(shortId(t.id))}</div>
       </div>
-      <div class="pill accent">${esc(t.my_role || "member")}</div>
+      <div class="pill accent">${getCountdown(t.start_date)}</div>
     </div>
     <div class="pills">
       <span class="pill currency-pill">Loading…</span>
