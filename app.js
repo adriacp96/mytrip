@@ -156,24 +156,25 @@ let userCache = {};          // cache for user info
 // ---- auth
 async function sendMagicLink() {
   const email = ($("email").value || "").trim();
+  const password = ($("password").value || "").trim();
+  
   if (!email) return setMsg(authMsg, "Enter your email.", "warn");
+  if (!password) return setMsg(authMsg, "Enter your password.", "warn");
 
   loginBtn.disabled = true;
   setMsg(authMsg, "Signing in…", "warn");
 
-  const defaultPassword = "mytrip2026";
-
   // Try to sign in first
   let { data, error } = await supabase.auth.signInWithPassword({
     email,
-    password: defaultPassword,
+    password,
   });
 
   // If user doesn't exist, create account
   if (error && error.message.includes("Invalid")) {
     const result = await supabase.auth.signUp({
       email,
-      password: defaultPassword,
+      password,
       options: { emailRedirectTo: window.location.href.split("#")[0] },
     });
     data = result.data;
