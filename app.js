@@ -1548,6 +1548,10 @@ packingListsContainer.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   console.log("Button found:", btn);
   if (!btn) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  
   const action = btn.dataset.action;
   console.log("Action:", action);
   
