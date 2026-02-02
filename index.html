@@ -228,6 +228,17 @@
                     </select>
                   </div>
                   <div class="gridSpan2">
+                    <div class="row wrap" style="justify-content: space-between; align-items: center;">
+                      <label class="label" style="margin: 0;">Split equally</label>
+                      <label class="label" style="margin: 0; display: flex; align-items: center; gap: 6px;">
+                        <input id="expenseSplitAll" type="checkbox" checked />
+                        All members
+                      </label>
+                    </div>
+                    <div id="expenseSplitList" class="splitList"></div>
+                    <div class="hint">Uncheck to choose members.</div>
+                  </div>
+                  <div class="gridSpan2">
                     <label class="label">Notes</label>
                     <input id="expenseNotes" class="input" placeholder="Optional notes…" />
                   </div>

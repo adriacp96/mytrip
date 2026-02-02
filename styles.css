@@ -374,6 +374,31 @@ h2 { font-size: 16px; }
 }
 .pill.accent { border-color: rgba(255,45,45,0.35); background: var(--accent2); color: rgba(255,255,255,0.9); }
 
+.splitList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.splitList.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.splitOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+  font-size: 12px;
+}
+.splitOption input {
+  margin: 0;
+}
+
 /* TAB NAVIGATION */
 .tabNav {
   display: flex;

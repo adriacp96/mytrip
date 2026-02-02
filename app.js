@@ -133,6 +133,8 @@ const expenseAmount = $("expenseAmount");
 const expenseCategory = $("expenseCategory");
 const expenseNotes = $("expenseNotes");
 const expensePaidBy = $("expensePaidBy");
+const expenseSplitAll = $("expenseSplitAll");
+const expenseSplitList = $("expenseSplitList");
 const addExpenseBtn = $("addExpenseBtn");
 const expensesList = $("expensesList");
 const budgetSummary = $("budgetSummary");
@@ -1003,7 +1005,9 @@ async function addExpense() {
   addExpenseBtn.disabled = true;
   setMsg(expensesMsg, "Adding…", "warn");
 
-  const { error } = await supabase.from("expenses").insert({
+  const { data: newExpense, error } = await supabase
+    .from("expenses")
+    .insert({
     trip_id: currentTrip.id,
     title,
     amount,
@@ -1012,11 +1016,40 @@ async function addExpense() {
     notes,
     currency: currentTrip.currency || "AED",
     paid_by,
-  });
+  })
+    .select("id")
+    .single();
 
   addExpenseBtn.disabled = false;
 
   if (error) return setMsg(expensesMsg, error.message, "bad");
+
+  // Split equally among selected members
+  let selectedUsers = [];
+  if (expenseSplitAll?.checked) {
+    selectedUsers = Array.from(expenseSplitList?.querySelectorAll("input[data-user-id]") || []).map(
+      (cb) => cb.dataset.userId
+    );
+  } else {
+    selectedUsers = Array.from(expenseSplitList?.querySelectorAll("input[data-user-id]") || [])
+      .filter((cb) => cb.checked)
+      .map((cb) => cb.dataset.userId);
+  }
+
+  if (!selectedUsers.length) {
+    setMsg(expensesMsg, "Select at least one member to split.", "warn");
+    return;
+  }
+
+  const share = parseFloat((amount / selectedUsers.length).toFixed(2));
+  const splits = selectedUsers.map((userId) => ({
+    expense_id: newExpense.id,
+    user_id: userId,
+    share_amount: share,
+  }));
+
+  const { error: splitError } = await supabase.from("expense_splits").insert(splits);
+  if (splitError) return setMsg(expensesMsg, splitError.message, "bad");
 
   expenseTitle.value = "";
   expenseAmount.value = "";
@@ -1044,6 +1077,7 @@ async function loadPaidByOptions() {
   }
 
   expensePaidBy.innerHTML = "";
+  if (expenseSplitList) expenseSplitList.innerHTML = "";
   
   for (const member of data) {
     const option = document.createElement("option");
@@ -1059,10 +1093,32 @@ async function loadPaidByOptions() {
     }
     
     expensePaidBy.appendChild(option);
+
+    if (expenseSplitList) {
+      const label = document.createElement("label");
+      label.className = "splitOption";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = true;
+      cb.dataset.userId = member.user_id;
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = option.textContent;
+
+      label.appendChild(cb);
+      label.appendChild(nameSpan);
+      expenseSplitList.appendChild(label);
+    }
   }
 
   // Set current user as default
   expensePaidBy.value = currentUser.id;
+
+  if (expenseSplitAll && expenseSplitList) {
+    expenseSplitAll.checked = true;
+    expenseSplitList.classList.add("disabled");
+  }
 }
 
 async function loadExpenses() {
@@ -1521,6 +1577,17 @@ toggleAddExpenseBtn.addEventListener("click", () => {
 togglePackingBtn.addEventListener("click", () => {
   addPackingPanel.classList.toggle("hidden");
 });
+
+if (expenseSplitAll && expenseSplitList) {
+  expenseSplitAll.addEventListener("change", () => {
+    const checked = expenseSplitAll.checked;
+    expenseSplitList.classList.toggle("disabled", checked);
+    const boxes = expenseSplitList.querySelectorAll("input[data-user-id]");
+    boxes.forEach((cb) => {
+      cb.checked = true;
+    });
+  });
+}
 
 userBtn.addEventListener("click", () => {
   if (!currentUser) return;
