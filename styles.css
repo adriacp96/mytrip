@@ -433,3 +433,70 @@ h2 { font-size: 18px; }
   .btn { padding: 11px 12px; }
   .logo { width: 38px; height: 38px; border-radius: 12px; }
 }
+
+@media (max-width: 720px) {
+  .app {
+    padding: 12px;
+    padding-bottom: 96px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topRight {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .row > .input,
+  .row > .btn,
+  .row > .chip {
+    flex: 1 1 100%;
+  }
+
+  .tabNav {
+    padding-bottom: 6px;
+  }
+
+  .tileTop {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .budgetGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dialog {
+    width: calc(100% - 16px);
+  }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 18px; }
+  h2 { font-size: 16px; }
+
+  .stack { padding: 12px; }
+
+  .cardHeader { padding: 14px 12px 10px; }
+
+  .tabBtn { padding: 9px 10px; font-size: 12px; }
+
+  .budgetGrid { grid-template-columns: 1fr; }
+
+  .navBtn { padding: 9px 10px; }
+  .navText { font-size: 12px; }
+}
