@@ -60,7 +60,7 @@ body {
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   margin-bottom: 14px;
   padding-top: env(safe-area-inset-top);
@@ -79,7 +79,7 @@ body {
 .brandName { font-weight: 900; letter-spacing: .2px; font-size: 16px; }
 .brandSub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 
-.topRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-top: 2px; }
 
 .layout { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 0 32px; }
 @media (min-width: 900px) {
