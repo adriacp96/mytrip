@@ -835,16 +835,23 @@ async function moveItemUp(itemId) {
   const idx = allItems.findIndex((x) => x.id === itemId);
   if (idx <= 0) return; // Already first
 
-  // Swap in the array
-  [allItems[idx - 1], allItems[idx]] = [allItems[idx], allItems[idx - 1]];
+  const currentItem = allItems[idx];
+  const prevItem = allItems[idx - 1];
 
-  // Reassign all order_seq values sequentially
-  for (let i = 0; i < allItems.length; i++) {
-    await supabase
-      .from("itinerary_items")
-      .update({ order_seq: i })
-      .eq("id", allItems[i].id);
-  }
+  // Only swap if they have the same date
+  if (currentItem.day_date !== prevItem.day_date) return;
+
+  // Swap order_seq values
+  const tempSeq = currentItem.order_seq;
+  await supabase
+    .from("itinerary_items")
+    .update({ order_seq: prevItem.order_seq })
+    .eq("id", currentItem.id);
+
+  await supabase
+    .from("itinerary_items")
+    .update({ order_seq: tempSeq })
+    .eq("id", prevItem.id);
 
   await loadItems();
 }
@@ -865,32 +872,23 @@ async function moveItemDown(itemId) {
   const idx = allItems.findIndex((x) => x.id === itemId);
   if (idx >= allItems.length - 1) return; // Already last
 
-  // Swap in the array
-  [allItems[idx], allItems[idx + 1]] = [allItems[idx + 1], allItems[idx]];
+  const currentItem = allItems[idx];
+  const nextItem = allItems[idx + 1];
 
-  // Reassign all order_seq values sequentially
-  for (let i = 0; i < allItems.length; i++) {
-    await supabase
-      .from("itinerary_items")
-      .update({ order_seq: i })
-      .eq("id", allItems[i].id);
-  }
+  // Only swap if they have the same date
+  if (currentItem.day_date !== nextItem.day_date) return;
 
-  await loadItems();
-}
-
-async function openEditDialog(itemId) {
-  if (!currentTrip) return;
-
-  setMsg(editMsg, "", "");
-
-  const { data, error } = await supabase
+  // Swap order_seq values
+  const tempSeq = currentItem.order_seq;
+  await supabase
     .from("itinerary_items")
-    .select("id,day_date,title,location,notes,category")
-    .eq("id", itemId)
-    .limit(1);
+    .update({ order_seq: nextItem.order_seq })
+    .eq("id", currentItem.id);
 
-  if (error) return setMsg(itemsMsg, error.message, "bad");
+  await supabase
+    .from("itinerary_items")
+    .update({ order_seq: tempSeq })
+    .eq("id", nextItem.id);
 
   const it = data?.[0];
   if (!it) return;
@@ -1256,12 +1254,14 @@ async function addPackingItem(listId, item) {
 }
 
 async function deletePackingList(listId) {
+  console.log("deletePackingList called with:", listId);
   if (!listId) return;
   if (!confirm("Delete this packing list and all its items?")) return;
 
   const { error } = await supabase.from("packing_lists").delete().eq("id", listId);
 
   if (error) {
+    console.error("Error deleting packing list:", error);
     setMsg(packingMsg, error.message, "bad");
     return;
   }
@@ -1271,11 +1271,13 @@ async function deletePackingList(listId) {
 }
 
 async function deletePackingItem(itemId) {
+  console.log("deletePackingItem called with:", itemId);
   if (!itemId) return;
 
   const { error } = await supabase.from("packing_items").delete().eq("id", itemId);
 
   if (error) {
+    console.error("Error deleting packing item:", error);
     setMsg(packingMsg, error.message, "bad");
     return;
   }
@@ -1542,15 +1544,20 @@ packingListsContainer.addEventListener("change", async (e) => {
 });
 
 packingListsContainer.addEventListener("click", (e) => {
+  console.log("Packing list click event:", e.target);
   const btn = e.target.closest("[data-action]");
+  console.log("Button found:", btn);
   if (!btn) return;
   const action = btn.dataset.action;
+  console.log("Action:", action);
   
   if (action === "delete-list") {
     const listId = btn.dataset.listId;
+    console.log("Delete list ID:", listId);
     if (listId) deletePackingList(listId);
   } else if (action === "delete-packing-item") {
     const itemId = btn.dataset.itemId;
+    console.log("Delete item ID:", itemId);
     if (itemId) deletePackingItem(itemId);
   }
 });
