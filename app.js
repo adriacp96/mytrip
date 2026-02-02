@@ -1204,25 +1204,68 @@ async function renderPackingList(list) {
   const total = items?.length || 0;
   const progress = total > 0 ? Math.round((packed / total) * 100) : 0;
 
-  let html = `<div style="display: flex; justify-content: space-between; align-items: center;">
-    <div class="panelTitle">${esc(list.title)} (${packed}/${total})</div>
-    <button class="btn ghost small" data-action="delete-list" data-list-id="${esc(list.id)}" type="button">Delete List</button>
-  </div>`;
-  html += `<div class="progressBar"><div class="progressFill" style="width:${progress}%"></div></div>`;
+  // Create header with delete button
+  const header = document.createElement("div");
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
 
-  const itemsHtml = (items || [])
-    .map(
-      (item) =>
-        `<div class="packingItem" style="display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" ${item.packed ? "checked" : ""} data-item-id="${esc(item.id)}" class="packingCheckbox" /> 
-          <span style="flex: 1;">${esc(item.item)}</span>
-          <button class="btn ghost small" data-action="delete-packing-item" data-item-id="${esc(item.id)}" type="button" style="padding: 2px 6px; font-size: 11px;">×</button>
-        </div>`
-    )
-    .join("");
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "panelTitle";
+  titleDiv.textContent = `${list.title} (${packed}/${total})`;
 
-  html += itemsHtml;
+  const deleteListBtn = document.createElement("button");
+  deleteListBtn.className = "btn ghost small";
+  deleteListBtn.textContent = "Delete List";
+  deleteListBtn.type = "button";
+  deleteListBtn.onclick = () => deletePackingList(list.id);
 
+  header.appendChild(titleDiv);
+  header.appendChild(deleteListBtn);
+  container.appendChild(header);
+
+  // Progress bar
+  const progressBar = document.createElement("div");
+  progressBar.className = "progressBar";
+  const progressFill = document.createElement("div");
+  progressFill.className = "progressFill";
+  progressFill.style.width = `${progress}%`;
+  progressBar.appendChild(progressFill);
+  container.appendChild(progressBar);
+
+  // Items
+  (items || []).forEach((item) => {
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "packingItem";
+    itemDiv.style.display = "flex";
+    itemDiv.style.alignItems = "center";
+    itemDiv.style.gap = "8px";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = item.packed;
+    checkbox.className = "packingCheckbox";
+    checkbox.dataset.itemId = item.id;
+
+    const span = document.createElement("span");
+    span.style.flex = "1";
+    span.textContent = item.item;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn ghost small";
+    deleteBtn.textContent = "×";
+    deleteBtn.type = "button";
+    deleteBtn.style.padding = "2px 6px";
+    deleteBtn.style.fontSize = "11px";
+    deleteBtn.onclick = () => deletePackingItem(item.id);
+
+    itemDiv.appendChild(checkbox);
+    itemDiv.appendChild(span);
+    itemDiv.appendChild(deleteBtn);
+    container.appendChild(itemDiv);
+  });
+
+  // Add item input
   const newItemInput = document.createElement("input");
   newItemInput.className = "input";
   newItemInput.placeholder = "Add item…";
@@ -1234,7 +1277,6 @@ async function renderPackingList(list) {
   addBtn.style.marginTop = "8px";
   addBtn.onclick = () => addPackingItem(list.id, newItemInput.value);
 
-  container.innerHTML = html;
   container.appendChild(newItemInput);
   container.appendChild(addBtn);
 
