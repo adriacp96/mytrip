@@ -448,6 +448,7 @@ h2 { font-size: 18px; }
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  overflow: hidden;
 }
 
 .authContent {
