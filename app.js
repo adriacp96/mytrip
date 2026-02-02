@@ -126,6 +126,7 @@ const setStart = $("setStart");
 const setEnd = $("setEnd");
 const setDescription = $("setDescription");
 const saveTripBtn = $("saveTripBtn");
+const deleteTripBtn = $("deleteTripBtn");
 const activityLog = $("activityLog");
 
 const bottomBar = $("bottomBar");
@@ -493,6 +494,31 @@ async function saveTripSettings() {
   await openTripById(currentTrip.id);
 }
 
+async function deleteTrip() {
+  if (!currentTrip?.id) return;
+  if (currentRole !== "owner") return setMsg(tripMsg, "Only owner can delete trips.", "warn");
+
+  const ok = confirm("Delete this trip and all its data? This cannot be undone.");
+  if (!ok) return;
+
+  deleteTripBtn.disabled = true;
+  setMsg(tripMsg, "Deleting…", "warn");
+
+  const { error } = await supabase
+    .from("trips")
+    .delete()
+    .eq("id", currentTrip.id)
+    .eq("owner_id", currentUser.id);
+
+  deleteTripBtn.disabled = false;
+
+  if (error) return setMsg(tripMsg, error.message, "bad");
+
+  setMsg(tripMsg, "Trip deleted.", "ok");
+  closeTrip();
+  await loadTrips();
+}
+
 async function copyTripId() {
   if (!currentTrip?.id) return;
   await navigator.clipboard.writeText(currentTrip.id);
@@ -784,9 +810,29 @@ function renderExpenseTile(exp) {
       </div>
       <div class="expenseAmount">${amount}</div>
     </div>
+    <div class="pills">
+      <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button">Delete</button>
+    </div>
   `;
 
   return el;
+}
+
+async function deleteExpense(expenseId) {
+  if (!expenseId || !currentTrip) return;
+
+  const ok = confirm("Delete this expense? This cannot be undone.");
+  if (!ok) return;
+
+  setMsg(expensesMsg, "Deleting…", "warn");
+
+  const { error } = await supabase.from("expenses").delete().eq("id", expenseId);
+
+  if (error) return setMsg(expensesMsg, error.message, "bad");
+
+  setMsg(expensesMsg, "Expense deleted.", "ok");
+  await logActivity(currentTrip.id, "deleted_expense", { id: expenseId });
+  await loadExpenses();
 }
 
 // ---- members
@@ -1068,6 +1114,7 @@ saveTripBtn.addEventListener("click", (e) => {
   e.preventDefault();
   saveTripSettings();
 });
+deleteTripBtn.addEventListener("click", deleteTrip);
 
 addItemBtn.addEventListener("click", addItem);
 addExpenseBtn.addEventListener("click", addExpense);
@@ -1095,6 +1142,14 @@ itemsList.addEventListener("click", (e) => {
   const itemId = tile?.dataset?.itemId;
   if (!itemId) return;
   if (action === "edit") openEditDialog(itemId);
+});
+
+expensesList.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "delete-expense") {
+    deleteExpense(btn.dataset.expenseId);
+  }
 });
 
 membersList.addEventListener("click", async (e) => {
