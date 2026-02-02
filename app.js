@@ -707,7 +707,6 @@ function renderItemTile(it) {
       </div>
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
-    ${updated ? `<div class="pills"><span class="pill">${esc(it.category)}</span><span class="pill">Updated: ${esc(updated)}</span><span class="pill">${esc(shortId(it.id))}</span></div>` : ""}
     <div class="pills">
       <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button">Delete</button>
     </div>
