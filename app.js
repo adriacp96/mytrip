@@ -712,6 +712,7 @@ function renderItemTile(it, index, total) {
   el.className = "tile";
   el.dataset.itemId = it.id;
   el.draggable = true;
+  el.style.position = "relative";
 
   const date = it.day_date ? esc(it.day_date) : "No date";
   const loc = it.location ? esc(it.location) : "No location";
@@ -722,6 +723,7 @@ function renderItemTile(it, index, total) {
   const canMoveDown = index < total - 1;
 
   el.innerHTML = `
+    <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(it.title)}</div>
@@ -729,11 +731,10 @@ function renderItemTile(it, index, total) {
       </div>
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
-    <div class="pills">
+    ${(canMoveUp || canMoveDown) ? `<div class="pills">
       ${canMoveUp ? `<button class="btn ghost small" data-action="moveup" data-item-id="${esc(it.id)}" type="button">↑ Up</button>` : ""}
       ${canMoveDown ? `<button class="btn ghost small" data-action="movedown" data-item-id="${esc(it.id)}" type="button">Down ↓</button>` : ""}
-      <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button">Delete</button>
-    </div>
+    </div>` : ""}
   `;
 
   // Drag and drop handlers
@@ -1059,19 +1060,18 @@ function renderExpenseTile(exp) {
   const el = document.createElement("div");
   el.className = "tile swipeable";
   el.dataset.expenseId = exp.id;
+  el.style.position = "relative";
   const icon = getCategoryIcon(exp.category);
   const amount = fmtCurrency(exp.amount, exp.currency);
 
   el.innerHTML = `
+    <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
         <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(shortId(exp.paid_by))}</div>
       </div>
       <div class="expenseAmount">${amount}</div>
-    </div>
-    <div class="pills">
-      <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button">Delete</button>
     </div>
   `;
 
