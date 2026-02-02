@@ -14,7 +14,49 @@
   </head>
 
   <body>
-    <div id="vantaBackground"></div>
+    <svg style="display: none;">
+      <defs>
+        <filter id="filter-back">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="5" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="80" />
+        </filter>
+        <filter id="filter-mid">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="5" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="40" />
+        </filter>
+        <filter id="filter-front">
+          <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" />
+        </filter>
+      </defs>
+    </svg>
+    <div class="sky">
+      <div class="cloud-container">
+        <div id="cloud-back" class="cloud cloud-1">
+          <div class="cloud-part cloud-part-1"></div>
+          <div class="cloud-part cloud-part-2"></div>
+          <div class="cloud-part cloud-part-3"></div>
+        </div>
+        <div id="cloud-mid" class="cloud cloud-2">
+          <div class="cloud-part cloud-part-4"></div>
+          <div class="cloud-part cloud-part-5"></div>
+          <div class="cloud-part cloud-part-6"></div>
+        </div>
+        <div id="cloud-front" class="cloud cloud-3">
+          <div class="cloud-part cloud-part-7"></div>
+          <div class="cloud-part cloud-part-8"></div>
+          <div class="cloud-part cloud-part-9"></div>
+        </div>
+        <div class="cloud cloud-4">
+          <div class="cloud-part cloud-part-10"></div>
+          <div class="cloud-part cloud-part-11"></div>
+        </div>
+        <div class="cloud cloud-5">
+          <div class="cloud-part cloud-part-12"></div>
+          <div class="cloud-part cloud-part-13"></div>
+        </div>
+      </div>
+    </div>
     <div id="a2hsOverlay" class="a2hs hidden" role="dialog" aria-live="polite">
       <div class="a2hsCard">
         <div class="a2hsTitle">Add MyTrip to Home Screen</div>
@@ -358,21 +400,6 @@
       </footer>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.clouds2.min.js"></script>
     <script type="module" src="./app.js"></script>
-    <script>
-      window.addEventListener('load', function() {
-        VANTA.CLOUDS2({
-          el: '#vantaBackground',
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          speed: 0.60
-        });
-      });
-    </script>
   </body>
 </html>
