@@ -225,6 +225,9 @@ h2 { font-size: 16px; }
   color: var(--text);
   font-size: 14px;
 }
+.authInput {
+  text-align: center;
+}
 .input[type="date"] {
   padding: 10px 12px;
 }
