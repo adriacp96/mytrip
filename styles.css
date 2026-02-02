@@ -260,22 +260,27 @@ h2 { font-size: 16px; }
 
 .btn {
   border: 0;
-  border-radius: 50%;
+  border-radius: 12px;
   padding: 9px 12px;
   font-weight: 900;
   cursor: pointer;
   white-space: nowrap;
   font-size: 13px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .btn.small {
   padding: 7px 10px;
   font-size: 12px;
   border-radius: 12px;
+}
+
+#refreshBtn {
+  border-radius: 50% !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .btn.primary {
   color: white;
