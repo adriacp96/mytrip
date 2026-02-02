@@ -436,7 +436,7 @@ h2 { font-size: 18px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: auto;
   padding: 20px;
   padding-top: calc(20px + env(safe-area-inset-top));
   padding-left: calc(20px + env(safe-area-inset-left));
