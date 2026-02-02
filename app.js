@@ -277,8 +277,8 @@ function setStoredNickname(userId, nickname) {
 
 function getCurrentDisplayName() {
   if (!currentUser) return "";
-  const nick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
-  return nick || currentUser.email || "";
+  const displayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
+  return displayName || currentUser.email || "";
 }
 
 async function signedInUI(user) {
@@ -291,11 +291,11 @@ async function signedInUI(user) {
   show(userBtn);
   show(nicknameBtn);
   document.querySelector(".topbar").classList.remove("hidden");
-  const metaNick = currentUser.user_metadata?.nickname || "";
-  if (metaNick) setStoredNickname(currentUser.id, metaNick);
+  const metaDisplayName = currentUser.user_metadata?.display_name || "";
+  if (metaDisplayName) setStoredNickname(currentUser.id, metaDisplayName);
   userBtn.textContent = getCurrentDisplayName();
-  const nick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
-  nicknameBtn.textContent = nick ? nick : "☺︎";
+  const displayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
+  nicknameBtn.textContent = displayName ? displayName : "☺︎";
 
   await handleDeepLinks();
   await loadTrips();
@@ -1488,12 +1488,12 @@ togglePackingBtn.addEventListener("click", () => {
 
 nicknameBtn.addEventListener("click", () => {
   if (!currentUser) return;
-  const currentNick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
-  const next = prompt("Set your nickname", currentNick || "");
+  const currentDisplayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
+  const next = prompt("Set your display name", currentDisplayName || "");
   if (next === null) return;
   const trimmed = next.trim();
   supabase.auth.updateUser({
-    data: { nickname: trimmed || null },
+    data: { display_name: trimmed || null },
   }).then(({ data, error }) => {
     if (error) return setMsg(tripsMsg, error.message, "bad");
     if (data?.user) currentUser = data.user;
