@@ -50,6 +50,12 @@ function getCategoryIcon(category) {
     accommodation: "🏨",
     transport: "🚗",
     food: "🍽️",
+    shopping: "🛍️",
+    entertainment: "🎬",
+    sightseeing: "📸",
+    nightlife: "🍷",
+    sports: "⚽",
+    wellness: "🧘",
     other: "📌",
     general: "💳"
   };
