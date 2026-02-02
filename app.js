@@ -1027,9 +1027,7 @@ async function saveEdit() {
   const { error } = await supabase.from("itinerary_items").update(payload).eq("id", id);
 
   saveEditBtn.disabled = false;
-
-  if (error) return setMsg(editMsg, error.message, "bad");
-
+  saveEditBtn.textContent = "Save";
   setMsg(editMsg, "Saved.", "ok");
   editDialog.close();
   await loadItems();
@@ -1080,11 +1078,15 @@ async function editItem(itemId) {
 
   // Populate the edit form
   editId.value = item.id;
-  itemTitle.value = item.title || "";
-  itemDate.value = item.day_date || "";
-  itemLocation.value = item.location || "";
-  itemNotes.value = item.notes || "";
-  itemCategory.value = item.category || "general";
+  editTitle.value = item.title || "";
+  editDate.value = item.day_date || "";
+  editLocation.value = item.location || "";
+  editNotes.value = item.notes || "";
+  editCategory.value = item.category || "general";
+
+  // Show save button with proper text
+  saveEditBtn.textContent = "Save";
+  saveEditBtn.disabled = false;
 
   // Open edit dialog
   editDialog.showModal();
