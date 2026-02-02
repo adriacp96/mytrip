@@ -82,8 +82,9 @@ body {
 }
 
 .a2hsIcon {
-  font-size: 18px;
-  display: inline-block;
+  height: 1em;
+  width: auto;
+  display: inline;
   margin: 0 2px;
   vertical-align: middle;
 }
