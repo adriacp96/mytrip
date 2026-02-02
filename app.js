@@ -159,19 +159,33 @@ async function sendMagicLink() {
   if (!email) return setMsg(authMsg, "Enter your email.", "warn");
 
   loginBtn.disabled = true;
-  setMsg(authMsg, "Sending magic link…", "warn");
+  setMsg(authMsg, "Signing in…", "warn");
 
-  const redirectTo = window.location.href.split("#")[0];
+  const defaultPassword = "mytrip2026";
 
-  const { error } = await supabase.auth.signInWithOtp({
+  // Try to sign in first
+  let { data, error } = await supabase.auth.signInWithPassword({
     email,
-    options: { emailRedirectTo: redirectTo },
+    password: defaultPassword,
   });
+
+  // If user doesn't exist, create account
+  if (error && error.message.includes("Invalid")) {
+    const result = await supabase.auth.signUp({
+      email,
+      password: defaultPassword,
+      options: { emailRedirectTo: window.location.href.split("#")[0] },
+    });
+    data = result.data;
+    error = result.error;
+  }
 
   loginBtn.disabled = false;
 
   if (error) return setMsg(authMsg, error.message, "bad");
-  setMsg(authMsg, "Check your email and click the link.", "ok");
+  if (data?.user) {
+    setMsg(authMsg, "Welcome!", "ok");
+  }
 }
 
 async function logOut() {
