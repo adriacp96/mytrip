@@ -24,6 +24,13 @@ const cleanUrl = () => {
   history.replaceState({}, "", url.toString());
 };
 
+function fmtRange(start, end) {
+  if (!start && !end) return "No dates set";
+  if (start && !end) return `From ${start}`;
+  if (!start && end) return `Until ${end}`;
+  return `${start} → ${end}`;
+}
+
 // ---- elements
 const authCard = $("authCard");
 const appCard = $("appCard");
@@ -36,6 +43,7 @@ const userBadge = $("userBadge");
 const authMsg = $("authMsg");
 const tripsMsg = $("tripsMsg");
 const itemsMsg = $("itemsMsg");
+const tripMsg = $("tripMsg");
 
 const tripsList = $("tripsList");
 const tripTitle = $("tripTitle");
@@ -45,10 +53,20 @@ const joinTripId = $("joinTripId");
 const joinTripBtn = $("joinTripBtn");
 
 const tripHeading = $("tripHeading");
+const tripRange = $("tripRange");
 const tripIdBadge = $("tripIdBadge");
+const tripRoleBadge = $("tripRoleBadge");
 const copyTripIdBtn = $("copyTripIdBtn");
 const copyJoinLinkBtn = $("copyJoinLinkBtn");
 const closeTripBtn = $("closeTripBtn");
+
+// settings inputs
+const setTitle = $("setTitle");
+const setCurrency = $("setCurrency");
+const setStart = $("setStart");
+const setEnd = $("setEnd");
+const setDescription = $("setDescription");
+const saveTripBtn = $("saveTripBtn");
 
 const itemDate = $("itemDate");
 const itemTitle = $("itemTitle");
@@ -74,7 +92,8 @@ const deleteItemBtn = $("deleteItemBtn");
 
 // ---- state
 let currentUser = null;
-let currentTrip = null;
+let currentTrip = null;      // full trip row
+let currentRole = null;      // owner/editor/viewer
 let realtimeChannel = null;
 
 // ---- auth
@@ -105,6 +124,7 @@ async function logOut() {
 function signedOutUI() {
   currentUser = null;
   currentTrip = null;
+  currentRole = null;
   cleanupRealtime();
 
   show(authCard);
@@ -121,6 +141,7 @@ function signedOutUI() {
   setMsg(authMsg, "", "");
   setMsg(tripsMsg, "", "");
   setMsg(itemsMsg, "", "");
+  setMsg(tripMsg, "", "");
 
   tripsList.innerHTML = "";
   itemsList.innerHTML = "";
@@ -148,23 +169,21 @@ async function handleDeepLinks() {
   const trip = params.get("trip");
 
   if (join) {
-    // best effort join; if already member, ignore error
     setMsg(tripsMsg, "Joining from link…", "warn");
     await supabase.from("trip_members").insert({
       trip_id: join,
       user_id: currentUser.id,
       role: "editor",
     });
-    // open it
     const t = await fetchTrip(join);
-    if (t) await openTrip(t);
+    if (t) await openTripById(t.id);
     cleanUrl();
     return;
   }
 
   if (trip) {
     const t = await fetchTrip(trip);
-    if (t) await openTrip(t);
+    if (t) await openTripById(t.id);
     cleanUrl();
   }
 }
@@ -172,12 +191,24 @@ async function handleDeepLinks() {
 async function fetchTrip(tripId) {
   const { data, error } = await supabase
     .from("trips")
-    .select("id,title,start_date,end_date,created_at,owner_id")
+    .select("id,title,start_date,end_date,description,currency,created_at,owner_id")
     .eq("id", tripId)
     .limit(1);
 
   if (error) return null;
   return data?.[0] || null;
+}
+
+async function fetchMyRole(tripId) {
+  const { data, error } = await supabase
+    .from("trip_members")
+    .select("role")
+    .eq("trip_id", tripId)
+    .eq("user_id", currentUser.id)
+    .limit(1);
+
+  if (error) return null;
+  return data?.[0]?.role || null;
 }
 
 // ---- trips
@@ -187,7 +218,7 @@ async function loadTrips() {
 
   const { data, error } = await supabase
     .from("trip_members")
-    .select("role, trips(id,title,start_date,end_date,created_at,owner_id)")
+    .select("role, trips(id,title,start_date,end_date,description,currency,created_at,owner_id)")
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false, referencedTable: "trips" });
 
@@ -212,16 +243,17 @@ function renderTripTile(t) {
     <div class="tileTop">
       <div>
         <div class="tileTitle">${esc(t.title)}</div>
+        <div class="tileMeta">${esc(fmtRange(t.start_date, t.end_date))}</div>
         <div class="tileMeta">Trip ID: ${esc(shortId(t.id))}</div>
       </div>
       <div class="pill accent">${esc(t.my_role || "member")}</div>
     </div>
     <div class="pills">
-      <span class="pill">Open</span>
-      <span class="pill">Share via Join Link</span>
+      <span class="pill">Currency: ${esc(t.currency || "USD")}</span>
+      ${t.description ? `<span class="pill">Has notes</span>` : `<span class="pill">No notes</span>`}
     </div>
   `;
-  el.addEventListener("click", () => openTrip(t));
+  el.addEventListener("click", () => openTripById(t.id));
   return el;
 }
 
@@ -234,8 +266,8 @@ async function createTrip() {
 
   const { data: tripRows, error: tripErr } = await supabase
     .from("trips")
-    .insert({ owner_id: currentUser.id, title })
-    .select("id,title,start_date,end_date,created_at,owner_id")
+    .insert({ owner_id: currentUser.id, title, currency: "USD" })
+    .select("id")
     .limit(1);
 
   if (tripErr) {
@@ -243,8 +275,7 @@ async function createTrip() {
     return setMsg(tripsMsg, tripErr.message, "bad");
   }
 
-  const trip = tripRows?.[0];
-  const tripId = trip?.id;
+  const tripId = tripRows?.[0]?.id;
 
   const { error: memErr } = await supabase.from("trip_members").insert({
     trip_id: tripId,
@@ -257,9 +288,10 @@ async function createTrip() {
   if (memErr) return setMsg(tripsMsg, memErr.message, "bad");
 
   tripTitle.value = "";
-  setMsg(tripsMsg, "Trip created. Open it and copy the join link.", "ok");
+  setMsg(tripsMsg, "Trip created. Opening…", "ok");
+
   await loadTrips();
-  if (trip) await openTrip(trip);
+  await openTripById(tripId);
 }
 
 async function joinTrip() {
@@ -280,23 +312,40 @@ async function joinTrip() {
   if (error) return setMsg(tripsMsg, error.message, "bad");
 
   joinTripId.value = "";
-  setMsg(tripsMsg, "Joined. Opening trip…", "ok");
-  const t = await fetchTrip(tripId);
+  setMsg(tripsMsg, "Joined. Opening…", "ok");
+
   await loadTrips();
-  if (t) await openTrip(t);
+  await openTripById(tripId);
 }
 
-// ---- trip details
-async function openTrip(t) {
-  currentTrip = t;
+// ---- trip open + settings load
+async function openTripById(tripId) {
+  const t = await fetchTrip(tripId);
+  if (!t) return setMsg(tripsMsg, "Trip not found or you don’t have access.", "bad");
 
-  tripHeading.textContent = t.title || "Trip";
-  tripIdBadge.textContent = `Trip ID: ${t.id}`;
+  currentTrip = t;
+  currentRole = await fetchMyRole(tripId);
+
+  tripHeading.textContent = currentTrip.title || "Trip";
+  tripRange.textContent = fmtRange(currentTrip.start_date, currentTrip.end_date);
+  tripIdBadge.textContent = `Trip ID: ${currentTrip.id}`;
+  tripRoleBadge.textContent = `Role: ${currentRole || "member"}`;
+
+  // fill settings
+  setTitle.value = currentTrip.title || "";
+  setCurrency.value = currentTrip.currency || "USD";
+  setStart.value = currentTrip.start_date || "";
+  setEnd.value = currentTrip.end_date || "";
+  setDescription.value = currentTrip.description || "";
+
+  // owner-only save
+  const isOwner = currentRole === "owner";
+  saveTripBtn.disabled = !isOwner;
+  if (!isOwner) setMsg(tripMsg, "Only the owner can edit trip settings.", "warn");
+  else setMsg(tripMsg, "", "");
 
   show(tripCard);
   navTrip.disabled = false;
-
-  // mobile nav state
   navTrips.classList.remove("navActive");
   navTrip.classList.add("navActive");
 
@@ -306,15 +355,47 @@ async function openTrip(t) {
 
 function closeTrip() {
   currentTrip = null;
+  currentRole = null;
   cleanupRealtime();
   hide(tripCard);
   itemsList.innerHTML = "";
   setMsg(itemsMsg, "", "");
+  setMsg(tripMsg, "", "");
 
-  // mobile nav state
   navTrip.disabled = true;
   navTrips.classList.add("navActive");
   navTrip.classList.remove("navActive");
+}
+
+async function saveTripSettings() {
+  if (!currentTrip?.id) return;
+  if (currentRole !== "owner") return setMsg(tripMsg, "You’re not the owner.", "bad");
+
+  const title = (setTitle.value || "").trim();
+  const currency = (setCurrency.value || "USD").trim();
+  const start_date = setStart.value || null;
+  const end_date = setEnd.value || null;
+  const description = (setDescription.value || "").trim() || null;
+
+  if (!title) return setMsg(tripMsg, "Title required.", "warn");
+
+  saveTripBtn.disabled = true;
+  setMsg(tripMsg, "Saving…", "warn");
+
+  const { error } = await supabase
+    .from("trips")
+    .update({ title, currency, start_date, end_date, description })
+    .eq("id", currentTrip.id);
+
+  saveTripBtn.disabled = false;
+
+  if (error) return setMsg(tripMsg, error.message, "bad");
+
+  setMsg(tripMsg, "Saved.", "ok");
+
+  // refresh trip + list
+  await loadTrips();
+  await openTripById(currentTrip.id);
 }
 
 async function copyTripId() {
@@ -331,6 +412,7 @@ async function copyJoinLink() {
   setMsg(itemsMsg, "Join link copied. Send it to your friends.", "ok");
 }
 
+// ---- itinerary
 async function addItem() {
   if (!currentTrip) return;
 
@@ -414,7 +496,7 @@ function renderItemTile(it) {
   return el;
 }
 
-// ---- edit/delete
+// ---- edit/delete (same as before)
 async function openEditDialog(itemId) {
   if (!currentTrip) return;
 
@@ -512,9 +594,8 @@ function cleanupRealtime() {
   }
 }
 
-// ---- navigation (mobile)
+// ---- mobile nav
 function goTripsView() {
-  // trips card always visible when signed in
   hide(tripCard);
   navTrip.disabled = !currentTrip;
   navTrips.classList.add("navActive");
@@ -538,6 +619,11 @@ closeTripBtn.addEventListener("click", closeTrip);
 copyTripIdBtn.addEventListener("click", copyTripId);
 copyJoinLinkBtn.addEventListener("click", copyJoinLink);
 
+saveTripBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  saveTripSettings();
+});
+
 addItemBtn.addEventListener("click", addItem);
 
 navTrips.addEventListener("click", goTripsView);
@@ -549,7 +635,6 @@ saveEditBtn.addEventListener("click", (e) => {
 });
 deleteItemBtn.addEventListener("click", deleteItem);
 
-// delegate edit button clicks
 itemsList.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
@@ -557,7 +642,6 @@ itemsList.addEventListener("click", (e) => {
   const tile = btn.closest(".tile");
   const itemId = tile?.dataset?.itemId;
   if (!itemId) return;
-
   if (action === "edit") openEditDialog(itemId);
 });
 
