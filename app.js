@@ -1297,7 +1297,7 @@ function renderMemberTile(member, email, balanceInfo = { total: 0, details: {} }
   el.className = "tile";
   const isCurrentUser = member.user_id === currentUser.id;
   const isOwner = currentRole === "owner";
-  const displayName = isCurrentUser ? (getStoredNickname(currentUser.id) || email) : email;
+  const displayName = memberNames[member.user_id] || email;
   
   const balance = balanceInfo.total;
   let balanceText = "";
