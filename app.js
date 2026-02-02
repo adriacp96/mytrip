@@ -489,7 +489,7 @@ async function openTripById(tripId) {
 
   tripHeading.textContent = currentTrip.title || "Trip";
   tripRange.textContent = fmtRange(currentTrip.start_date, currentTrip.end_date);
-  tripIdBadge.textContent = `Trip ID: ${currentTrip.id}`;
+  document.getElementById("tripIdText").textContent = `Trip ID: ${currentTrip.id}`;
   tripRoleBadge.textContent = `Role: ${currentRole || "member"}`;
 
   // fill settings
