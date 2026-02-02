@@ -1221,14 +1221,38 @@ async function loadExpenses() {
     myShareMap[s.expense_id] += s.share_amount || 0;
   });
 
+  // Load all splits to show who each expense is split between
+  const { data: allSplits } = await supabase
+    .from("expense_splits")
+    .select("expense_id, user_id")
+    .in("expense_id", data.map(e => e.id));
+
+  const splitMap = {};
+  (allSplits || []).forEach((s) => {
+    if (!splitMap[s.expense_id]) splitMap[s.expense_id] = [];
+    splitMap[s.expense_id].push(s.user_id);
+  });
+
   // Render budget summary
   budgetSummary.innerHTML = renderBudgetSummary(data, currentTrip.currency, myShareMap);
 
-  // Render expense tiles with display names
+  // Render expense tiles with display names and split info
+  const { data: allMembers } = await supabase
+    .from("trip_members")
+    .select("user_id, email")
+    .eq("trip_id", currentTrip.id);
+
+  const memberMap = {};
+  (allMembers || []).forEach((m) => {
+    const nickname = getStoredNickname(m.user_id);
+    memberMap[m.user_id] = nickname || m.email || "";
+  });
+
   for (const exp of data) {
     const paidByName = await getUserNameWithEmail(exp.paid_by);
     const myShare = myShareMap[exp.id];
-    expensesList.appendChild(renderExpenseTile(exp, paidByName, myShare));
+    const splitUserIds = splitMap[exp.id] || [];
+    expensesList.appendChild(renderExpenseTile(exp, paidByName, myShare, splitUserIds, memberMap));
   }
 }
 
@@ -1247,21 +1271,24 @@ function renderBudgetSummary(expenses, currency, myShareMap = {}) {
   return html;
 }
 
-function renderExpenseTile(exp, paidByName, myShare) {
+function renderExpenseTile(exp, paidByName, myShare, splitUserIds = [], memberMap = {}) {
   const el = document.createElement("div");
   el.className = "tile swipeable";
   el.dataset.expenseId = exp.id;
   el.style.position = "relative";
   const icon = getCategoryIcon(exp.category);
   const amount = fmtCurrency(exp.amount, exp.currency);
-  const shareText = fmtCurrency(myShare !== undefined ? myShare : exp.amount, exp.currency);
+  
+  // Get names of people this is split among
+  const splitNames = splitUserIds.map(uid => memberMap[uid] || "").filter(Boolean);
+  const forText = splitNames.length > 0 ? splitNames.join(", ") : "Unknown";
 
   el.innerHTML = `
     <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
-        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || "")} for ${shareText}</div>
+        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || "")} for ${esc(forText)}</div>
       </div>
       <div class="expenseAmount">${amount}</div>
     </div>
