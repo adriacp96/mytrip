@@ -70,6 +70,7 @@ const tripCard = $("tripCard");
 const loginBtn = $("loginBtn");
 const logoutBtn = $("logoutBtn");
 const userBtn = $("userBtn");
+const nicknameBtn = $("nicknameBtn");
 const a2hsOverlay = $("a2hsOverlay");
 const a2hsClose = $("a2hsClose");
 
@@ -247,6 +248,7 @@ function signedOutUI() {
   hide(logoutBtn);
   hide(refreshBtn);
   hide(userBtn);
+  hide(nicknameBtn);
   
   document.querySelector(".topbar").classList.add("hidden");
 
@@ -259,6 +261,26 @@ function signedOutUI() {
   itemsList.innerHTML = "";
 }
 
+function getStoredNickname(userId) {
+  if (!userId) return "";
+  return localStorage.getItem(`nickname:${userId}`) || "";
+}
+
+function setStoredNickname(userId, nickname) {
+  if (!userId) return;
+  if (!nickname) {
+    localStorage.removeItem(`nickname:${userId}`);
+  } else {
+    localStorage.setItem(`nickname:${userId}`, nickname);
+  }
+}
+
+function getCurrentDisplayName() {
+  if (!currentUser) return "";
+  const nick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
+  return nick || currentUser.email || "";
+}
+
 async function signedInUI(user) {
   currentUser = user;
 
@@ -267,8 +289,13 @@ async function signedInUI(user) {
   show(logoutBtn);
   show(refreshBtn);
   show(userBtn);
+  show(nicknameBtn);
   document.querySelector(".topbar").classList.remove("hidden");
-  userBtn.textContent = user.email;
+  const metaNick = currentUser.user_metadata?.nickname || "";
+  if (metaNick) setStoredNickname(currentUser.id, metaNick);
+  userBtn.textContent = getCurrentDisplayName();
+  const nick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
+  nicknameBtn.textContent = nick ? nick : "Set nickname";
 
   await handleDeepLinks();
   await loadTrips();
@@ -1124,11 +1151,12 @@ function renderMemberTile(member, email) {
   el.className = "tile";
   const isCurrentUser = member.user_id === currentUser.id;
   const isOwner = currentRole === "owner";
+  const displayName = isCurrentUser ? (getStoredNickname(currentUser.id) || email) : email;
 
   el.innerHTML = `
     <div class="tileTop">
       <div>
-        <div class="tileTitle">${esc(email)}</div>
+        <div class="tileTitle">${esc(displayName)}</div>
         <div class="tileMeta">Joined ${new Date(member.joined_at).toLocaleDateString()}</div>
       </div>
       <div class="pills">
@@ -1456,6 +1484,18 @@ toggleAddExpenseBtn.addEventListener("click", () => {
 
 togglePackingBtn.addEventListener("click", () => {
   addPackingPanel.classList.toggle("hidden");
+});
+
+nicknameBtn.addEventListener("click", () => {
+  if (!currentUser) return;
+  const currentNick = getStoredNickname(currentUser.id);
+  const next = prompt("Set your nickname", currentNick || "");
+  if (next === null) return;
+  const trimmed = next.trim();
+  setStoredNickname(currentUser.id, trimmed);
+  userBtn.textContent = getCurrentDisplayName();
+  nicknameBtn.textContent = trimmed ? trimmed : "Set nickname";
+  loadMembers();
 });
 
 a2hsClose.addEventListener("click", () => {
