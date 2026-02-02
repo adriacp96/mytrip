@@ -815,6 +815,7 @@ function renderItemTile(it, index, total) {
   const canMoveDown = index < total - 1;
 
   el.innerHTML = `
+    <button class="btn ghost small" data-action="edit" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 48px; padding: 4px 8px; font-size: 16px; line-height: 1;">✎</button>
     <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
     <div class="tileTop">
       <div>
@@ -1000,12 +1001,19 @@ async function saveEdit() {
   const id = editId.value;
   if (!id) return;
 
+  // Support both edit form fields and regular add form fields
+  const dateVal = editDate.value || itemDate.value;
+  const titleVal = editTitle.value || itemTitle.value;
+  const locationVal = editLocation.value || itemLocation.value;
+  const notesVal = editNotes.value || itemNotes.value;
+  const categoryVal = editCategory.value || itemCategory.value;
+
   const payload = {
-    day_date: editDate.value || null,
-    title: (editTitle.value || "").trim(),
-    location: (editLocation.value || "").trim() || null,
-    notes: (editNotes.value || "").trim() || null,
-    category: (editCategory.value || "activity").trim(),
+    day_date: dateVal || null,
+    title: (titleVal || "").trim(),
+    location: (locationVal || "").trim() || null,
+    notes: (notesVal || "").trim() || null,
+    category: (categoryVal || "activity").trim(),
     updated_by: currentUser.id,
     updated_at: new Date().toISOString(),
   };
@@ -1050,6 +1058,35 @@ async function deleteItem(itemId) {
   if (editMsg) setMsg(editMsg, "Deleted.", "ok");
   editDialog.close();
   await loadItems();
+}
+
+async function editItem(itemId) {
+  if (!currentTrip) return;
+
+  // Fetch the item details
+  const { data, error } = await supabase
+    .from("itinerary_items")
+    .select("id,title,day_date,location,notes,category")
+    .eq("id", itemId)
+    .limit(1);
+
+  if (error || !data?.length) {
+    setMsg(itemsMsg, "Failed to load item.", "bad");
+    return;
+  }
+
+  const item = data[0];
+
+  // Populate the edit form
+  editId.value = item.id;
+  itemTitle.value = item.title || "";
+  itemDate.value = item.day_date || "";
+  itemLocation.value = item.location || "";
+  itemNotes.value = item.notes || "";
+  itemCategory.value = item.category || "general";
+
+  // Open edit dialog
+  editDialog.showModal();
 }
 
 // ---- expenses
@@ -1841,6 +1878,9 @@ itemsList.addEventListener("click", (e) => {
   if (action === "delete") {
     const itemId = btn.dataset.itemId;
     if (itemId) deleteItem(itemId);
+  } else if (action === "edit") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) editItem(itemId);
   } else if (action === "moveup") {
     const itemId = btn.dataset.itemId;
     if (itemId) moveItemUp(itemId);
