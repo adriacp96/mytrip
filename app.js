@@ -1940,8 +1940,9 @@ packingListsContainer.addEventListener("click", (e) => {
 
 // ---- monuments carousel
 function initMonumentsCarousel() {
+  const carousel = document.getElementById("monumentsCarousel");
   const track = document.querySelector(".monumentsTrack");
-  if (!track) return;
+  if (!track || !carousel) return;
 
   const monuments = Array.from(track.children);
   
@@ -1956,6 +1957,9 @@ function initMonumentsCarousel() {
     const clone = monument.cloneNode(true);
     track.appendChild(clone);
   });
+  
+  // Show carousel
+  carousel.classList.remove("hidden");
 }
 
 // ---- init

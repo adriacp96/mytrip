@@ -332,11 +332,16 @@ h2 { font-size: 16px; }
 .monumentsCarousel {
   overflow: hidden;
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto 24px;
   height: 80px;
-  margin: 20px 0 16px;
   position: relative;
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.monumentsCarousel.hidden {
+  display: none;
 }
 
 .monumentsTrack {
@@ -348,7 +353,7 @@ h2 { font-size: 16px; }
 .monument {
   width: 56px;
   height: 56px;
-  opacity: 0.6;
+  opacity: 0.7;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
