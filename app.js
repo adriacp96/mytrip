@@ -133,9 +133,6 @@ const expenseAmount = $("expenseAmount");
 const expenseCategory = $("expenseCategory");
 const expenseNotes = $("expenseNotes");
 const expensePaidBy = $("expensePaidBy");
-const expenseSplit = $("expenseSplit");
-const expenseSplitMembers = $("expenseSplitMembers");
-const expenseSplitMembersList = $("expenseSplitMembersList");
 const addExpenseBtn = $("addExpenseBtn");
 const expensesList = $("expensesList");
 const budgetSummary = $("budgetSummary");
@@ -232,9 +229,6 @@ async function sendMagicLink() {
   if (error) return setMsg(authMsg, error.message, "bad");
   if (data?.user) {
     setMsg(authMsg, "Welcome!", "ok");
-  }
-  if (data?.session?.user) {
-    await signedInUI(data.session.user);
   }
 }
 
@@ -1003,26 +997,6 @@ async function addExpense() {
   const notes = (expenseNotes.value || "").trim() || null;
   const paid_by = expensePaidBy.value || currentUser.id;
 
-  // Handle split logic
-  let split_type = "none";
-  let split_with = null;
-  
-  if (expenseSplit.checked) {
-    const allBoxes = document.querySelectorAll(".split-member-checkbox");
-    const checkedBoxes = document.querySelectorAll(".split-member-checkbox:checked");
-    if (checkedBoxes.length === 0) {
-      return setMsg(expensesMsg, "Select at least one member to split with.", "warn");
-    }
-
-    if (checkedBoxes.length === allBoxes.length) {
-      split_type = "all";
-      split_with = null;
-    } else {
-      split_type = "custom";
-      split_with = Array.from(checkedBoxes).map(cb => cb.value);
-    }
-  }
-
   if (!title) return setMsg(expensesMsg, "Description required.", "warn");
   if (amount <= 0) return setMsg(expensesMsg, "Amount must be greater than 0.", "warn");
 
@@ -1038,8 +1012,6 @@ async function addExpense() {
     notes,
     currency: currentTrip.currency || "AED",
     paid_by,
-    split_type,
-    split_with,
   });
 
   addExpenseBtn.disabled = false;
@@ -1072,7 +1044,6 @@ async function loadPaidByOptions() {
   }
 
   expensePaidBy.innerHTML = "";
-    expenseSplitMembersList.innerHTML = "";
   
   for (const member of data) {
     const option = document.createElement("option");
@@ -1088,26 +1059,6 @@ async function loadPaidByOptions() {
     }
     
     expensePaidBy.appendChild(option);
-
-    // Add to split members list
-    const checkboxDiv = document.createElement("div");
-    checkboxDiv.style.display = "flex";
-    checkboxDiv.style.alignItems = "center";
-    checkboxDiv.style.gap = "8px";
-    
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = member.user_id;
-    checkbox.className = "split-member-checkbox";
-    checkbox.checked = true;
-    
-    const label = document.createElement("label");
-    label.textContent = option.textContent;
-    label.style.fontSize = "13px";
-    
-    checkboxDiv.appendChild(checkbox);
-    checkboxDiv.appendChild(label);
-    expenseSplitMembersList.appendChild(checkboxDiv);
   }
 
   // Set current user as default
@@ -1123,7 +1074,7 @@ async function loadExpenses() {
 
   const { data, error } = await supabase
     .from("expenses")
-    .select("id,title,amount,expense_date,category,paid_by,currency,split_type,split_with")
+    .select("id,title,amount,expense_date,category,paid_by,currency")
     .eq("trip_id", currentTrip.id)
     .order("expense_date", { ascending: false });
 
@@ -1214,141 +1165,35 @@ async function loadMembers() {
   setMsg(membersMsg, "Loading members…", "warn");
   membersList.innerHTML = "";
 
-  const { data: members, error: membersError } = await supabase
+  const { data, error } = await supabase
     .from("trip_members")
     .select("user_id,role,joined_at")
     .eq("trip_id", currentTrip.id);
 
-  if (membersError) return setMsg(membersMsg, membersError.message, "bad");
+  if (error) return setMsg(membersMsg, error.message, "bad");
 
-  if (!members?.length) return setMsg(membersMsg, "No members yet.", "warn");
-
-  // Get all expenses for this trip
-  const { data: expenses, error: expensesError } = await supabase
-    .from("expenses")
-    .select("paid_by,amount,currency,split_type,split_with")
-    .eq("trip_id", currentTrip.id);
-
-  if (expensesError) return setMsg(membersMsg, expensesError.message, "bad");
-
-  // Initialize balances
-  const balances = {};
-  members.forEach(m => {
-    balances[m.user_id] = {
-      paid: 0,
-      shouldPay: 0,
-      balance: 0,
-      member: m
-    };
-  });
-
-  // Calculate how much each person paid
-  (expenses || []).forEach(exp => {
-    if (balances[exp.paid_by]) {
-      balances[exp.paid_by].paid += exp.amount || 0;
-    }
-  });
-
-  // Calculate balance (positive = owed money, negative = owes money)
-  Object.keys(balances).forEach(userId => {
-    balances[userId].balance = balances[userId].paid - balances[userId].shouldPay;
-  });
+  if (!data?.length) return setMsg(membersMsg, "No members yet.", "warn");
 
   setMsg(membersMsg, "", "");
 
-  for (const member of members) {
+  for (const member of data) {
     const email = await getUserEmail(member.user_id);
-    membersList.appendChild(renderMemberTile(member, email, balances[member.user_id]));
-  }
-
-  // Calculate and display settlements
-  displaySettlements(balances);
-}
-
-function displaySettlements(balances) {
-  const debtors = [];
-  const creditors = [];
-
-  Object.entries(balances).forEach(([userId, data]) => {
-    if (data.balance < -0.01) {
-      debtors.push({ userId, amount: -data.balance, name: data.member.user_id });
-    } else if (data.balance > 0.01) {
-      creditors.push({ userId, amount: data.balance, name: data.member.user_id });
-    }
-  });
-
-  if (debtors.length === 0 && creditors.length === 0) {
-    return;
-  }
-
-  const settlements = [];
-  
-  // Simplified debt settlement algorithm
-  debtors.sort((a, b) => b.amount - a.amount);
-  creditors.sort((a, b) => b.amount - a.amount);
-
-  let i = 0, j = 0;
-  while (i < debtors.length && j < creditors.length) {
-    const debt = debtors[i].amount;
-    const credit = creditors[j].amount;
-    const amount = Math.min(debt, credit);
-
-    settlements.push({
-      from: debtors[i].userId,
-      to: creditors[j].userId,
-      amount
-    });
-
-    debtors[i].amount -= amount;
-    creditors[j].amount -= amount;
-
-    if (debtors[i].amount < 0.01) i++;
-    if (creditors[j].amount < 0.01) j++;
-  }
-
-  // Display settlements
-  if (settlements.length > 0) {
-    const settlementsDiv = document.createElement("div");
-    settlementsDiv.className = "panel";
-    settlementsDiv.style.marginTop = "16px";
-    settlementsDiv.innerHTML = '<div class="panelTitle">Settlements</div>';
-
-    settlements.forEach(async (s) => {
-      const fromName = await getUserEmail(s.from);
-      const toName = await getUserEmail(s.to);
-      const settleItem = document.createElement("div");
-      settleItem.className = "tileMeta";
-      settleItem.style.padding = "8px 0";
-      settleItem.textContent = `${fromName} owes ${toName} ${fmtCurrency(s.amount, currentTrip.currency || "AED")}`;
-      settlementsDiv.appendChild(settleItem);
-    });
-
-    membersList.appendChild(settlementsDiv);
+    membersList.appendChild(renderMemberTile(member, email));
   }
 }
 
-function renderMemberTile(member, email, balanceData) {
+function renderMemberTile(member, email) {
   const el = document.createElement("div");
   el.className = "tile";
   const isCurrentUser = member.user_id === currentUser.id;
   const isOwner = currentRole === "owner";
   const displayName = isCurrentUser ? (getStoredNickname(currentUser.id) || email) : email;
 
-  const balance = balanceData ? balanceData.balance : 0;
-  const balanceText = balance > 0.01 
-    ? `+${fmtCurrency(balance, currentTrip.currency || "AED")}` 
-    : balance < -0.01 
-    ? `${fmtCurrency(balance, currentTrip.currency || "AED")}`
-    : fmtCurrency(0, currentTrip.currency || "AED");
-  
-  const balanceColor = balance > 0.01 ? "color: #10b981;" : balance < -0.01 ? "color: #ef4444;" : "";
-
   el.innerHTML = `
     <div class="tileTop">
       <div>
         <div class="tileTitle">${esc(displayName)}</div>
         <div class="tileMeta">Joined ${new Date(member.joined_at).toLocaleDateString()}</div>
-        ${balanceData ? `<div class="tileMeta" style="margin-top: 4px; ${balanceColor} font-weight: 600;">Balance: ${balanceText}</div>` : ""}
       </div>
       <div class="pills">
         <span class="pill">${esc(member.role)}</span>
@@ -1651,31 +1496,6 @@ refreshBtn.addEventListener("click", () => {
   window.location.reload();
 });
 
-      // Calculate how much each person should pay based on split type
-      let splitMembers = [];
-    
-      if (exp.split_type === "all" || !exp.split_type) {
-        // Split among all members
-        splitMembers = members.map(m => m.user_id);
-      } else if (exp.split_type === "custom" && exp.split_with) {
-        // Split among selected members
-        splitMembers = exp.split_with;
-      } else if (exp.split_type === "none") {
-        // Not split: only the payer should cover it
-        splitMembers = exp.paid_by ? [exp.paid_by] : [];
-      }
-    
-      if (splitMembers.length > 0) {
-        const shareAmount = exp.amount / splitMembers.length;
-        splitMembers.forEach(userId => {
-          if (balances[userId]) {
-            balances[userId].shouldPay += shareAmount;
-          }
-        });
-      }
-  expenseSplit.checked = true;
-  expenseSplitMembers.style.display = "block";
-
 if (toggleCreateBtn && createPanel) {
   toggleCreateBtn.addEventListener("click", () => {
     createPanel.classList.toggle("hidden");
@@ -1700,16 +1520,6 @@ toggleAddExpenseBtn.addEventListener("click", () => {
 
 togglePackingBtn.addEventListener("click", () => {
   addPackingPanel.classList.toggle("hidden");
-
-expenseSplit.addEventListener("change", () => {
-  if (expenseSplit.checked) {
-    expenseSplitMembers.style.display = "block";
-    // Check all members by default
-    document.querySelectorAll(".split-member-checkbox").forEach(cb => cb.checked = true);
-  } else {
-    expenseSplitMembers.style.display = "none";
-  }
-});
 });
 
 userBtn.addEventListener("click", () => {
