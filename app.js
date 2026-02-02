@@ -295,7 +295,7 @@ async function signedInUI(user) {
   if (metaNick) setStoredNickname(currentUser.id, metaNick);
   userBtn.textContent = getCurrentDisplayName();
   const nick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
-  nicknameBtn.textContent = nick ? nick : "Set nickname";
+  nicknameBtn.textContent = nick ? nick : "☺︎";
 
   await handleDeepLinks();
   await loadTrips();
@@ -1499,7 +1499,7 @@ nicknameBtn.addEventListener("click", () => {
     if (data?.user) currentUser = data.user;
     setStoredNickname(currentUser.id, trimmed);
     userBtn.textContent = getCurrentDisplayName();
-    nicknameBtn.textContent = trimmed ? trimmed : "Set nickname";
+    nicknameBtn.textContent = trimmed ? trimmed : "☺︎";
     loadMembers();
   });
 });
