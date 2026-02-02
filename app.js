@@ -154,27 +154,30 @@ let realtimeChannel = null;
 let userCache = {};          // cache for user info
 
 // ---- auth
+let authMode = "signin"; // "signin" or "signup"
+
 async function sendMagicLink() {
   const email = ($("email").value || "").trim();
+  const password = ($("password").value || "").trim();
   
   if (!email) return setMsg(authMsg, "Enter your email.", "warn");
+  if (!password) return setMsg(authMsg, "Enter your password.", "warn");
 
   loginBtn.disabled = true;
-  setMsg(authMsg, "Signing in…", "warn");
+  setMsg(authMsg, authMode === "signin" ? "Signing in…" : "Creating account…", "warn");
 
-  const defaultPassword = "mytrip2026secure";
+  let data, error;
 
-  // Try to sign in first
-  let { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: defaultPassword,
-  });
-
-  // If user doesn't exist, create account
-  if (error && error.message.includes("Invalid")) {
+  if (authMode === "signin") {
+    // Sign in
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    data = result.data;
+    error = result.error;
+  } else {
+    // Sign up
     const result = await supabase.auth.signUp({
       email,
-      password: defaultPassword,
+      password,
       options: { emailRedirectTo: window.location.href.split("#")[0] },
     });
     data = result.data;
@@ -1134,6 +1137,21 @@ function goTripView() {
 // ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
+
+// Toggle between sign in and sign up
+$("toggleAuthMode").addEventListener("click", () => {
+  authMode = authMode === "signin" ? "signup" : "signin";
+  if (authMode === "signin") {
+    loginBtn.textContent = "Sign in";
+    $("toggleAuthMode").textContent = "Create account";
+    $("toggleAuthMode").previousElementSibling.textContent = "Don't have an account? ";
+  } else {
+    loginBtn.textContent = "Create account";
+    $("toggleAuthMode").textContent = "Sign in";
+    $("toggleAuthMode").previousElementSibling.textContent = "Already have an account? ";
+  }
+  setMsg(authMsg, "", "");
+});
 
 createTripBtn.addEventListener("click", createTrip);
 joinTripBtn.addEventListener("click", joinTrip);
