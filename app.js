@@ -676,13 +676,12 @@ function renderItemTile(it) {
         <div class="tileTitle">${icon} ${esc(it.title)}</div>
         <div class="tileMeta">${date} · ${loc}</div>
       </div>
-      <div class="pills" style="margin-top:0;">
-        <button class="pill" data-action="edit" type="button">Edit</button>
-        <button class="pill" data-action="delete" type="button">Delete</button>
-      </div>
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
     ${updated ? `<div class="pills"><span class="pill">${esc(it.category)}</span><span class="pill">Updated: ${esc(updated)}</span><span class="pill">${esc(shortId(it.id))}</span></div>` : ""}
+    <div class="pills">
+      <button class="btn ghost small" data-action="delete" data-item-id="${esc(it.id)}" type="button">Delete</button>
+    </div>
   `;
 
   return el;
@@ -1226,11 +1225,10 @@ itemsList.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
-  const tile = btn.closest(".tile");
-  const itemId = tile?.dataset?.itemId;
-  if (!itemId) return;
-  if (action === "edit") openEditDialog(itemId);
-  if (action === "delete") deleteItem(itemId);
+  if (action === "delete") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) deleteItem(itemId);
+  }
 });
 
 expensesList.addEventListener("click", (e) => {
