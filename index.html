@@ -2,91 +2,146 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trip Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>MyTrip</title>
     <link rel="stylesheet" href="./styles.css" />
+    <meta name="theme-color" content="#0b0f19" />
   </head>
+
   <body>
-    <div class="container">
+    <div class="app">
       <header class="topbar">
-        <div>
-          <h1>Trip Planner</h1>
-          <p class="muted">Collaborative trips · synced with Supabase</p>
+        <div class="brand">
+          <div class="logo">✈️</div>
+          <div class="brandText">
+            <div class="brandName">MyTrip</div>
+            <div class="brandSub">Plan together. Stay synced.</div>
+          </div>
         </div>
-        <div class="right">
-          <div id="userBadge" class="badge hidden"></div>
-          <button id="logoutBtn" class="btn secondary hidden">Log out</button>
+
+        <div class="topRight">
+          <div id="userBadge" class="chip hidden"></div>
+          <button id="logoutBtn" class="btn ghost hidden">Log out</button>
         </div>
       </header>
 
-      <main class="grid">
-
+      <main class="layout">
         <!-- AUTH -->
         <section id="authCard" class="card">
-          <h2>Sign in</h2>
-          <p class="muted">Magic link via email.</p>
-
-          <div class="row">
-            <input id="email" class="input" type="email" placeholder="you@example.com" />
-            <button id="loginBtn" class="btn">Send link</button>
+          <div class="cardHeader">
+            <div>
+              <h1>Sign in</h1>
+              <p class="muted">We’ll email you a magic link.</p>
+            </div>
           </div>
 
-          <div id="authMsg" class="msg"></div>
+          <div class="stack">
+            <label class="label" for="email">Email</label>
+            <div class="row">
+              <input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email" />
+              <button id="loginBtn" class="btn primary">Send link</button>
+            </div>
+            <div id="authMsg" class="msg"></div>
+
+            <div class="divider"></div>
+
+            <details class="details">
+              <summary>Supabase checklist</summary>
+              <ul>
+                <li>Enable Email provider</li>
+                <li>Set Site URL + Redirect URL to your GitHub Pages URL</li>
+                <li>Paste Supabase URL + anon key in <code>app.js</code></li>
+              </ul>
+            </details>
+          </div>
         </section>
 
-        <!-- APP -->
+        <!-- TRIPS -->
         <section id="appCard" class="card hidden">
-          <h2>Your trips</h2>
-
-          <div class="row">
-            <input id="tripTitle" class="input" placeholder="Trip name (Tokyo 2026)" />
-            <button id="createTripBtn" class="btn">Create</button>
+          <div class="cardHeader">
+            <div>
+              <h2>Your trips</h2>
+              <p class="muted">Create a trip or join with a Trip ID.</p>
+            </div>
           </div>
 
-          <div class="row">
-            <input id="joinTripId" class="input" placeholder="Join with Trip ID" />
-            <button id="joinTripBtn" class="btn secondary">Join</button>
-          </div>
+          <div class="stack">
+            <div class="panel">
+              <div class="panelTitle">Create</div>
+              <div class="row">
+                <input id="tripTitle" class="input" placeholder="Trip name (e.g. Japan 2026)" />
+                <button id="createTripBtn" class="btn primary">Create</button>
+              </div>
+            </div>
 
-          <div id="tripsList" class="listbox"></div>
-          <div id="tripsMsg" class="msg"></div>
+            <div class="panel">
+              <div class="panelTitle">Join</div>
+              <div class="row">
+                <input id="joinTripId" class="input" placeholder="Trip ID (uuid)" />
+                <button id="joinTripBtn" class="btn soft">Join</button>
+              </div>
+              <div class="hint">Ask a friend to share the Trip ID.</div>
+            </div>
+
+            <div class="sectionTitle">Trips</div>
+            <div id="tripsList" class="list"></div>
+            <div id="tripsMsg" class="msg"></div>
+          </div>
         </section>
 
         <!-- TRIP DETAILS -->
         <section id="tripCard" class="card hidden">
-          <div class="split">
-            <div>
-              <h2 id="tripHeading"></h2>
-              <p class="muted">Realtime itinerary</p>
-              <div class="row">
-                <div id="tripIdBadge" class="badge"></div>
-                <button id="copyTripIdBtn" class="btn secondary">Copy ID</button>
+          <div class="cardHeader tripHeader">
+            <div class="tripTitleWrap">
+              <h2 id="tripHeading">Trip</h2>
+              <p class="muted">Realtime itinerary for everyone in this trip.</p>
+
+              <div class="row wrap">
+                <div id="tripIdBadge" class="chip"></div>
+                <button id="copyTripIdBtn" class="btn ghost">Copy ID</button>
               </div>
             </div>
-            <button id="closeTripBtn" class="btn secondary">Close</button>
+
+            <button id="closeTripBtn" class="btn ghost">Close</button>
           </div>
 
-          <div class="hr"></div>
+          <div class="stack">
+            <div class="panel">
+              <div class="panelTitle">Add itinerary item</div>
 
-          <h3>Add item</h3>
-          <div class="formgrid">
-            <input id="itemDate" class="input" type="date" />
-            <input id="itemTitle" class="input" placeholder="Title" />
-            <input id="itemLocation" class="input" placeholder="Location" />
-            <input id="itemNotes" class="input" placeholder="Notes" />
+              <div class="grid2">
+                <div>
+                  <label class="label">Date</label>
+                  <input id="itemDate" class="input" type="date" />
+                </div>
+                <div>
+                  <label class="label">Title</label>
+                  <input id="itemTitle" class="input" placeholder="Museum / Dinner / Hike…" />
+                </div>
+                <div>
+                  <label class="label">Location</label>
+                  <input id="itemLocation" class="input" placeholder="Shibuya" />
+                </div>
+                <div>
+                  <label class="label">Notes</label>
+                  <input id="itemNotes" class="input" placeholder="Tickets, time, link…" />
+                </div>
+              </div>
+
+              <div class="row">
+                <button id="addItemBtn" class="btn primary">Add</button>
+                <div id="itemsMsg" class="msg"></div>
+              </div>
+            </div>
+
+            <div class="sectionTitle">Itinerary</div>
+            <div id="itemsList" class="list"></div>
           </div>
-
-          <button id="addItemBtn" class="btn">Add item</button>
-          <div id="itemsMsg" class="msg"></div>
-
-          <div class="hr"></div>
-          <div id="itemsList" class="listbox"></div>
         </section>
-
       </main>
 
-      <footer class="footer muted">
-        GitHub Pages · Supabase · Realtime
+      <footer class="footer">
+        <span class="muted">GitHub Pages · Supabase · Realtime</span>
       </footer>
     </div>
 
