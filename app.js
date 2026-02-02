@@ -1130,7 +1130,11 @@ async function addExpense() {
     }
 
     // Delete old splits and create new ones
-    await supabase.from("expense_splits").delete().eq("expense_id", editingId);
+    const { error: deleteError } = await supabase.from("expense_splits").delete().eq("expense_id", editingId);
+    if (deleteError) {
+      addExpenseBtn.disabled = false;
+      return setMsg(expensesMsg, "Failed to update expense: " + deleteError.message, "bad");
+    }
   } else {
     // Create new expense
     const { data: newExpense, error } = await supabase
@@ -1416,6 +1420,20 @@ async function editExpense(expenseId) {
   expenseDate.value = exp.expense_date || "";
   expenseCategory.value = exp.category || "general";
   expensePaidBy.value = exp.paid_by || currentUser.id;
+
+  // Fetch current expense splits to show which members are selected
+  const { data: splits } = await supabase
+    .from("expense_splits")
+    .select("user_id")
+    .eq("expense_id", expenseId);
+
+  const currentSplitUsers = new Set((splits || []).map(s => s.user_id));
+
+  // Update split list checkboxes to reflect current splits
+  const checkboxes = expenseSplitList?.querySelectorAll("input[data-user-id]") || [];
+  checkboxes.forEach(cb => {
+    cb.checked = currentSplitUsers.has(cb.dataset.userId);
+  });
 
   // Store expense ID for saving
   expenseEditId.value = expenseId;
