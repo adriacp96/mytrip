@@ -42,6 +42,7 @@ body {
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   background: transparent;
+  position: relative;
 }
 
 .app {

@@ -5,6 +5,25 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Initialize Vanta clouds background
+window.addEventListener("load", () => {
+  if (typeof VANTA !== "undefined") {
+    VANTA.CLOUDS({
+      el: "body",
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.0,
+      minWidth: 200.0,
+      scale: 1.0,
+      texturePath: null,
+      cloudOpacity: 0.3,
+      cloudShadowOpacity: 0.1,
+      speed: 0.4,
+    });
+  }
+});
+
 // ---- helpers
 const $ = (id) => document.getElementById(id);
 const show = (el) => el.classList.remove("hidden");
