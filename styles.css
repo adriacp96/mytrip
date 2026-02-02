@@ -92,31 +92,32 @@ body {
 .app {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 12px 18px;
-  padding-top: calc(20px + env(safe-area-inset-top));
-  padding-left: calc(18px + env(safe-area-inset-left));
-  padding-right: calc(18px + env(safe-area-inset-right));
-  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  padding: 8px 12px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-left: calc(12px + env(safe-area-inset-left));
+  padding-right: calc(12px + env(safe-area-inset-right));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 10px;
   padding-top: env(safe-area-inset-top);
   flex-wrap: nowrap;
 }
 
-.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .logo {
-  width: 42px; height: 42px;
+  width: 36px; height: 36px;
   display: grid; place-items: center;
-  border-radius: 14px;
+  border-radius: 12px;
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--line);
   box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+  font-size: 18px;
 }
 .brandName { font-weight: 900; letter-spacing: .2px; font-size: 16px; }
 .brandSub { color: var(--muted); font-size: 12px; margin-top: 2px; }
@@ -138,9 +139,9 @@ body {
   #userBtn, #logoutBtn { padding: 4px 8px; font-size: 12px; }
 }
 
-.layout { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 0 32px; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 0 12px; }
 @media (min-width: 900px) {
-  .layout { grid-template-columns: 1fr 1fr; margin: 0 32px; max-width: calc(1100px - 64px); }
+  .layout { grid-template-columns: 1fr 1fr; margin: 0 12px; max-width: calc(1100px - 24px); }
   #tripCard { grid-column: span 2; }
 }
 
@@ -169,12 +170,12 @@ body {
 }
 
 .cardHeader {
-  padding: 16px 16px 10px;
+  padding: 12px 14px 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   position: relative;
   z-index: 2;
 }
@@ -185,11 +186,11 @@ body {
 }
 
 h1, h2 { margin: 0; }
-h1 { font-size: 20px; }
-h2 { font-size: 18px; }
-.muted { color: var(--muted); margin: 6px 0 0; }
+h1 { font-size: 18px; }
+h2 { font-size: 16px; }
+.muted { color: var(--muted); margin: 4px 0 0; font-size: 13px; }
 
-.stack { padding: 14px 16px 16px; display: grid; gap: 12px; position: relative; z-index: 2; }
+.stack { padding: 10px 14px 14px; display: grid; gap: 10px; position: relative; z-index: 2; }
 
 .label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 
@@ -198,8 +199,8 @@ h2 { font-size: 18px; }
 
 .input {
   width: 100%;
-  padding: 11px 12px;
-  border-radius: 14px;
+  padding: 9px 11px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   outline: none;
   background: rgba(255,255,255,0.05);
@@ -232,11 +233,12 @@ h2 { font-size: 18px; }
 
 .btn {
   border: 0;
-  border-radius: 14px;
-  padding: 11px 14px;
+  border-radius: 12px;
+  padding: 9px 12px;
   font-weight: 900;
   cursor: pointer;
   white-space: nowrap;
+  font-size: 13px;
 }
 .btn.small {
   padding: 7px 10px;
@@ -277,8 +279,8 @@ h2 { font-size: 18px; }
 .panel {
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.03);
-  border-radius: 16px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 10px;
 }
 .panelTitle {
   font-size: 12px;
@@ -500,25 +502,25 @@ h2 { font-size: 18px; }
 
 .authContent {
   width: 100%;
-  max-width: 380px;
+  max-width: 360px;
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .authHeader {
   text-align: center;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .authLogo {
-  font-size: 48px;
+  font-size: 40px;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .authHeader h1 {
-  font-size: 24px;
+  font-size: 22px;
   margin: 0;
   background: linear-gradient(135deg, #000000 0%, rgba(0,0,0,0.8) 100%);
   -webkit-background-clip: text;
@@ -534,7 +536,7 @@ h2 { font-size: 18px; }
 
 .authForm {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .authFeatures {
