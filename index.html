@@ -27,40 +27,46 @@
 
       <main class="layout">
         <!-- AUTH -->
-        <section id="authCard" class="card">
-          <div class="cardHeader">
-            <div>
-              <h1>Sign in</h1>
-              <p class="muted">We’ll email you a magic link.</p>
-            </div>
-          </div>
-
-          <div class="stack">
-            <label class="label" for="email">Email</label>
-            <div class="row">
-              <input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email" />
-              <button id="loginBtn" class="btn primary">Send link</button>
+        <section id="authCard" class="authCard card">
+          <div class="authContent">
+            <div class="authHeader">
+              <div class="authLogo">✈️</div>
+              <h1>Welcome to MyTrip</h1>
+              <p class="authSubtitle">Plan your adventures together</p>
             </div>
 
-            <div id="authMsg" class="msg"></div>
+            <div class="authForm">
+              <div class="authFeatures">
+                <div class="feature">
+                  <span class="featureIcon">📋</span>
+                  <span class="featureText">Shared itineraries</span>
+                </div>
+                <div class="feature">
+                  <span class="featureIcon">💰</span>
+                  <span class="featureText">Split expenses</span>
+                </div>
+                <div class="feature">
+                  <span class="featureIcon">🎒</span>
+                  <span class="featureText">Packing lists</span>
+                </div>
+              </div>
 
-            <div class="divider"></div>
+              <div class="authDivider"></div>
 
-            <details class="details">
-              <summary>Supabase checklist</summary>
-              <ul>
-                <li>Enable Email provider</li>
-                <li>Set Site URL + Redirect URL to your GitHub Pages URL</li>
-                <li>Paste Supabase URL + anon key in <code>app.js</code></li>
-              </ul>
-            </details>
-
-            <div class="hint">
-              Share join link like <code>?join=&lt;tripId&gt;</code>
+              <div>
+                <label class="label" for="email">Email address</label>
+                <div class="inputRow">
+                  <input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email" />
+                  <button id="loginBtn" class="btn primary">Send link</button>
+                </div>
+                <div id="authMsg" class="msg"></div>
+              </div>
             </div>
           </div>
         </section>
-
+            </div>
+          </div>
+        </section>
         <!-- TRIPS -->
         <section id="appCard" class="card hidden">
           <div class="cardHeader">

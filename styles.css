@@ -392,6 +392,140 @@ h2 { font-size: 18px; }
 
 .hidden { display: none !important; }
 
+/* AUTH PAGE */
+.authCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.authContent {
+  width: 100%;
+  max-width: 480px;
+  display: grid;
+  gap: 32px;
+}
+
+.authHeader {
+  text-align: center;
+  display: grid;
+  gap: 12px;
+}
+
+.authLogo {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.authHeader h1 {
+  font-size: 32px;
+  margin: 0;
+  background: linear-gradient(135deg, var(--text) 0%, rgba(238,242,255,0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.authSubtitle {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.authForm {
+  display: grid;
+  gap: 24px;
+}
+
+.authFeatures {
+  display: grid;
+  gap: 12px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  transition: all .2s ease;
+}
+
+.feature:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--line2);
+}
+
+.featureIcon {
+  font-size: 20px;
+}
+
+.featureText {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.authDivider {
+  height: 1px;
+  background: var(--line);
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inputRow .input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.inputRow .btn {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+@media (max-width: 720px) {
+  .authCard {
+    min-height: auto;
+    padding-bottom: 96px;
+  }
+
+  .authHeader h1 {
+    font-size: 24px;
+  }
+
+  .authLogo {
+    font-size: 48px;
+  }
+
+  .inputRow {
+    flex-direction: column;
+  }
+
+  .inputRow .input,
+  .inputRow .btn {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .authHeader h1 {
+    background: linear-gradient(135deg, var(--text) 0%, rgba(11,15,25,0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
 .footer { margin-top: 14px; text-align: center; font-size: 12px; padding: 10px 0 0; }
 
 /* MOBILE BOTTOM BAR */
