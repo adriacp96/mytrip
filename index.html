@@ -113,86 +113,183 @@
           </div>
 
           <div class="stack">
-            <!-- SETTINGS -->
-            <div class="panel">
-              <div class="panelTitle">Trip settings</div>
+            <!-- TAB NAVIGATION -->
+            <div class="tabNav">
+              <button id="tabItinerary" class="tabBtn tabActive" data-tab="itinerary">📋 Itinerary</button>
+              <button id="tabExpenses" class="tabBtn" data-tab="expenses">💰 Expenses</button>
+              <button id="tabMembers" class="tabBtn" data-tab="members">👥 Members</button>
+              <button id="tabPacking" class="tabBtn" data-tab="packing">🧳 Packing</button>
+              <button id="tabSettings" class="tabBtn" data-tab="settings">⚙️ Settings</button>
+            </div>
 
-              <div class="grid2">
-                <div>
-                  <label class="label">Title</label>
-                  <input id="setTitle" class="input" placeholder="Trip title" />
+            <!-- ITINERARY TAB -->
+            <div id="tabContentItinerary" class="tabContent">
+              <div class="panel">
+                <div class="panelTitle">Add itinerary item</div>
+
+                <div class="grid2">
+                  <div>
+                    <label class="label">Date</label>
+                    <input id="itemDate" class="input" type="date" />
+                  </div>
+                  <div>
+                    <label class="label">Category</label>
+                    <select id="itemCategory" class="input">
+                      <option value="activity">Activity</option>
+                      <option value="accommodation">Accommodation</option>
+                      <option value="transport">Transport</option>
+                      <option value="food">Food</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label">Title</label>
+                    <input id="itemTitle" class="input" placeholder="Museum / Dinner / Hike…" />
+                  </div>
+                  <div>
+                    <label class="label">Location</label>
+                    <input id="itemLocation" class="input" placeholder="Shibuya" />
+                  </div>
+                  <div class="gridSpan2">
+                    <label class="label">Notes</label>
+                    <input id="itemNotes" class="input" placeholder="Tickets, time, link…" />
+                  </div>
                 </div>
 
-                <div>
-                  <label class="label">Currency</label>
-                  <select id="setCurrency" class="input">
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="AED">AED</option>
-                    <option value="JPY">JPY</option>
-                    <option value="CAD">CAD</option>
-                    <option value="AUD">AUD</option>
-                    <option value="CHF">CHF</option>
-                    <option value="SGD">SGD</option>
-                    <option value="HKD">HKD</option>
-                  </select>
-                  <div class="hint">Owner-only (security enforced by Supabase).</div>
-                </div>
-
-                <div>
-                  <label class="label">Start date</label>
-                  <input id="setStart" class="input" type="date" />
-                </div>
-
-                <div>
-                  <label class="label">End date</label>
-                  <input id="setEnd" class="input" type="date" />
-                </div>
-
-                <div class="gridSpan2">
-                  <label class="label">Description</label>
-                  <textarea id="setDescription" class="textarea" rows="4" placeholder="Trip notes, links, ideas…"></textarea>
+                <div class="row">
+                  <button id="addItemBtn" class="btn primary">Add item</button>
+                  <div id="itemsMsg" class="msg"></div>
                 </div>
               </div>
 
-              <div class="row wrap">
-                <button id="saveTripBtn" class="btn primary">Save settings</button>
-                <div id="tripMsg" class="msg"></div>
+              <div class="sectionTitle">Itinerary</div>
+              <div id="itemsList" class="list"></div>
+            </div>
+
+            <!-- EXPENSES TAB -->
+            <div id="tabContentExpenses" class="tabContent hidden">
+              <div class="panel">
+                <div class="panelTitle">Add expense</div>
+
+                <div class="grid2">
+                  <div>
+                    <label class="label">Date</label>
+                    <input id="expenseDate" class="input" type="date" />
+                  </div>
+                  <div>
+                    <label class="label">Category</label>
+                    <select id="expenseCategory" class="input">
+                      <option value="accommodation">Accommodation</option>
+                      <option value="food">Food</option>
+                      <option value="transport">Transport</option>
+                      <option value="activity">Activity</option>
+                      <option value="general">General</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label">Description</label>
+                    <input id="expenseTitle" class="input" placeholder="Dinner at restaurant…" />
+                  </div>
+                  <div>
+                    <label class="label">Amount</label>
+                    <input id="expenseAmount" class="input" type="number" step="0.01" placeholder="0.00" />
+                  </div>
+                  <div class="gridSpan2">
+                    <label class="label">Notes</label>
+                    <input id="expenseNotes" class="input" placeholder="Optional notes…" />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <button id="addExpenseBtn" class="btn primary">Add expense</button>
+                  <div id="expensesMsg" class="msg"></div>
+                </div>
+              </div>
+
+              <div class="sectionTitle">Summary</div>
+              <div id="budgetSummary" class="budgetPanel"></div>
+
+              <div class="sectionTitle">Expenses</div>
+              <div id="expensesList" class="list"></div>
+            </div>
+
+            <!-- MEMBERS TAB -->
+            <div id="tabContentMembers" class="tabContent hidden">
+              <div class="panel">
+                <div class="panelTitle">Trip members</div>
+                <div id="membersList" class="list"></div>
+                <div id="membersMsg" class="msg"></div>
               </div>
             </div>
 
-            <!-- ITINERARY -->
-            <div class="panel">
-              <div class="panelTitle">Add itinerary item</div>
-
-              <div class="grid2">
-                <div>
-                  <label class="label">Date</label>
-                  <input id="itemDate" class="input" type="date" />
+            <!-- PACKING TAB -->
+            <div id="tabContentPacking" class="tabContent hidden">
+              <div class="panel">
+                <div class="panelTitle">Create packing list</div>
+                <div class="row">
+                  <input id="packingListTitle" class="input" placeholder="Packing list name" />
+                  <button id="createPackingListBtn" class="btn primary">Create</button>
                 </div>
-                <div>
-                  <label class="label">Title</label>
-                  <input id="itemTitle" class="input" placeholder="Museum / Dinner / Hike…" />
-                </div>
-                <div>
-                  <label class="label">Location</label>
-                  <input id="itemLocation" class="input" placeholder="Shibuya" />
-                </div>
-                <div>
-                  <label class="label">Notes</label>
-                  <input id="itemNotes" class="input" placeholder="Tickets, time, link…" />
-                </div>
+                <div id="packingMsg" class="msg"></div>
               </div>
 
-              <div class="row">
-                <button id="addItemBtn" class="btn primary">Add</button>
-                <div id="itemsMsg" class="msg"></div>
-              </div>
+              <div class="sectionTitle">Packing lists</div>
+              <div id="packingListsContainer"></div>
             </div>
 
-            <div class="sectionTitle">Itinerary</div>
-            <div id="itemsList" class="list"></div>
+            <!-- SETTINGS TAB -->
+            <div id="tabContentSettings" class="tabContent hidden">
+              <div class="panel">
+                <div class="panelTitle">Trip settings</div>
+
+                <div class="grid2">
+                  <div>
+                    <label class="label">Title</label>
+                    <input id="setTitle" class="input" placeholder="Trip title" />
+                  </div>
+
+                  <div>
+                    <label class="label">Currency</label>
+                    <select id="setCurrency" class="input">
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="AED">AED</option>
+                      <option value="JPY">JPY</option>
+                      <option value="CAD">CAD</option>
+                      <option value="AUD">AUD</option>
+                      <option value="CHF">CHF</option>
+                      <option value="SGD">SGD</option>
+                      <option value="HKD">HKD</option>
+                    </select>
+                    <div class="hint">Owner-only (security enforced by Supabase).</div>
+                  </div>
+
+                  <div>
+                    <label class="label">Start date</label>
+                    <input id="setStart" class="input" type="date" />
+                  </div>
+
+                  <div>
+                    <label class="label">End date</label>
+                    <input id="setEnd" class="input" type="date" />
+                  </div>
+
+                  <div class="gridSpan2">
+                    <label class="label">Description</label>
+                    <textarea id="setDescription" class="textarea" rows="4" placeholder="Trip notes, links, ideas…"></textarea>
+                  </div>
+                </div>
+
+                <div class="row wrap">
+                  <button id="saveTripBtn" class="btn primary">Save settings</button>
+                  <div id="tripMsg" class="msg"></div>
+                </div>
+              </div>
+
+              <div class="sectionTitle">Activity</div>
+              <div id="activityLog" class="list"></div>
+            </div>
           </div>
         </section>
       </main>

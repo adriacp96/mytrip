@@ -31,22 +31,6 @@ function fmtRange(start, end) {
   return `${start} → ${end}`;
 }
 
-function fmtCurrency(amount, currency = "USD") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
-}
-
-function getCategoryIcon(category) {
-  const icons = {
-    activity: "🎭",
-    accommodation: "🏨",
-    transport: "🚗",
-    food: "🍽️",
-    other: "📌",
-    general: "💳"
-  };
-  return icons[category] || "📌";
-}
-
 // ---- elements
 const authCard = $("authCard");
 const appCard = $("appCard");
@@ -76,57 +60,20 @@ const copyTripIdBtn = $("copyTripIdBtn");
 const copyJoinLinkBtn = $("copyJoinLinkBtn");
 const closeTripBtn = $("closeTripBtn");
 
-// tab buttons
-const tabItinerary = $("tabItinerary");
-const tabExpenses = $("tabExpenses");
-const tabMembers = $("tabMembers");
-const tabPacking = $("tabPacking");
-const tabSettings = $("tabSettings");
-
-const tabContentItinerary = $("tabContentItinerary");
-const tabContentExpenses = $("tabContentExpenses");
-const tabContentMembers = $("tabContentMembers");
-const tabContentPacking = $("tabContentPacking");
-const tabContentSettings = $("tabContentSettings");
-
-// itinerary
-const itemDate = $("itemDate");
-const itemTitle = $("itemTitle");
-const itemLocation = $("itemLocation");
-const itemNotes = $("itemNotes");
-const itemCategory = $("itemCategory");
-const addItemBtn = $("addItemBtn");
-const itemsList = $("itemsList");
-
-// expenses
-const expenseDate = $("expenseDate");
-const expenseTitle = $("expenseTitle");
-const expenseAmount = $("expenseAmount");
-const expenseCategory = $("expenseCategory");
-const expenseNotes = $("expenseNotes");
-const addExpenseBtn = $("addExpenseBtn");
-const expensesList = $("expensesList");
-const budgetSummary = $("budgetSummary");
-const expensesMsg = $("expensesMsg");
-
-// members
-const membersList = $("membersList");
-const membersMsg = $("membersMsg");
-
-// packing
-const packingListTitle = $("packingListTitle");
-const createPackingListBtn = $("createPackingListBtn");
-const packingListsContainer = $("packingListsContainer");
-const packingMsg = $("packingMsg");
-
-// settings
+// settings inputs
 const setTitle = $("setTitle");
 const setCurrency = $("setCurrency");
 const setStart = $("setStart");
 const setEnd = $("setEnd");
 const setDescription = $("setDescription");
 const saveTripBtn = $("saveTripBtn");
-const activityLog = $("activityLog");
+
+const itemDate = $("itemDate");
+const itemTitle = $("itemTitle");
+const itemLocation = $("itemLocation");
+const itemNotes = $("itemNotes");
+const addItemBtn = $("addItemBtn");
+const itemsList = $("itemsList");
 
 const bottomBar = $("bottomBar");
 const navTrips = $("navTrips");
@@ -139,7 +86,6 @@ const editDate = $("editDate");
 const editTitle = $("editTitle");
 const editLocation = $("editLocation");
 const editNotes = $("editNotes");
-const editCategory = $("editCategory");
 const editMsg = $("editMsg");
 const saveEditBtn = $("saveEditBtn");
 const deleteItemBtn = $("deleteItemBtn");
@@ -149,7 +95,6 @@ let currentUser = null;
 let currentTrip = null;      // full trip row
 let currentRole = null;      // owner/editor/viewer
 let realtimeChannel = null;
-let userCache = {};          // cache for user info
 
 // ---- auth
 async function sendMagicLink() {
@@ -225,15 +170,13 @@ async function handleDeepLinks() {
 
   if (join) {
     setMsg(tripsMsg, "Joining from link…", "warn");
-    const { error } = await supabase.from("trip_members").insert({
+    await supabase.from("trip_members").insert({
       trip_id: join,
       user_id: currentUser.id,
       role: "editor",
     });
-    if (!error) {
-      const t = await fetchTrip(join);
-      if (t) await openTripById(t.id);
-    }
+    const t = await fetchTrip(join);
+    if (t) await openTripById(t.id);
     cleanUrl();
     return;
   }
@@ -266,14 +209,6 @@ async function fetchMyRole(tripId) {
 
   if (error) return null;
   return data?.[0]?.role || null;
-}
-
-async function getUserEmail(userId) {
-  if (userCache[userId]) return userCache[userId];
-  const { data } = await supabase.auth.admin?.getUserById(userId);
-  const email = data?.user?.email || shortId(userId);
-  userCache[userId] = email;
-  return email;
 }
 
 // ---- trips
@@ -354,15 +289,14 @@ async function createTrip() {
 
   tripTitle.value = "";
   setMsg(tripsMsg, "Trip created. Opening…", "ok");
-  
-  await logActivity(tripId, "created_trip", { title });
+
   await loadTrips();
   await openTripById(tripId);
 }
 
 async function joinTrip() {
   const tripId = (joinTripId.value || "").trim();
-  if (!tripId) return setMsg(tripsMsg, "Enter a Trip ID.", "warn");
+  if (!tripId) return setMsg(tripsMsg, "Paste a Trip ID to join.", "warn");
 
   joinTripBtn.disabled = true;
   setMsg(tripsMsg, "Joining…", "warn");
@@ -379,8 +313,7 @@ async function joinTrip() {
 
   joinTripId.value = "";
   setMsg(tripsMsg, "Joined. Opening…", "ok");
-  
-  await logActivity(tripId, "joined_trip", {});
+
   await loadTrips();
   await openTripById(tripId);
 }
@@ -388,7 +321,7 @@ async function joinTrip() {
 // ---- trip open + settings load
 async function openTripById(tripId) {
   const t = await fetchTrip(tripId);
-  if (!t) return setMsg(tripsMsg, "Trip not found or you don't have access.", "bad");
+  if (!t) return setMsg(tripsMsg, "Trip not found or you don’t have access.", "bad");
 
   currentTrip = t;
   currentRole = await fetchMyRole(tripId);
@@ -416,14 +349,7 @@ async function openTripById(tripId) {
   navTrips.classList.remove("navActive");
   navTrip.classList.add("navActive");
 
-  // switch to itinerary tab by default
-  switchTab("itinerary");
-
   await loadItems();
-  await loadExpenses();
-  await loadMembers();
-  await loadPackingLists();
-  await loadActivityLog();
   setupRealtime();
 }
 
@@ -441,31 +367,9 @@ function closeTrip() {
   navTrip.classList.remove("navActive");
 }
 
-// ---- tab navigation
-function switchTab(tabName) {
-  const tabs = [
-    { btn: tabItinerary, content: tabContentItinerary, name: "itinerary" },
-    { btn: tabExpenses, content: tabContentExpenses, name: "expenses" },
-    { btn: tabMembers, content: tabContentMembers, name: "members" },
-    { btn: tabPacking, content: tabContentPacking, name: "packing" },
-    { btn: tabSettings, content: tabContentSettings, name: "settings" },
-  ];
-
-  tabs.forEach((tab) => {
-    if (tab.name === tabName) {
-      tab.btn.classList.add("tabActive");
-      show(tab.content);
-    } else {
-      tab.btn.classList.remove("tabActive");
-      hide(tab.content);
-    }
-  });
-}
-
-// ---- trip settings
 async function saveTripSettings() {
   if (!currentTrip?.id) return;
-  if (currentRole !== "owner") return setMsg(tripMsg, "Only owner can save.", "warn");
+  if (currentRole !== "owner") return setMsg(tripMsg, "You’re not the owner.", "bad");
 
   const title = (setTitle.value || "").trim();
   const currency = (setCurrency.value || "USD").trim();
@@ -488,7 +392,8 @@ async function saveTripSettings() {
   if (error) return setMsg(tripMsg, error.message, "bad");
 
   setMsg(tripMsg, "Saved.", "ok");
-  await logActivity(currentTrip.id, "updated_trip", { title });
+
+  // refresh trip + list
   await loadTrips();
   await openTripById(currentTrip.id);
 }
@@ -509,15 +414,14 @@ async function copyJoinLink() {
 
 // ---- itinerary
 async function addItem() {
-  if (!currentTrip) return setMsg(itemsMsg, "No trip selected.", "warn");
+  if (!currentTrip) return;
 
   const day_date = itemDate.value || null;
   const title = (itemTitle.value || "").trim();
   const location = (itemLocation.value || "").trim() || null;
   const notes = (itemNotes.value || "").trim() || null;
-  const category = (itemCategory.value || "activity").trim();
 
-  if (!title) return setMsg(itemsMsg, "Title required.", "warn");
+  if (!title) return setMsg(itemsMsg, "Item title required.", "warn");
 
   addItemBtn.disabled = true;
   setMsg(itemsMsg, "Adding…", "warn");
@@ -528,7 +432,6 @@ async function addItem() {
     title,
     location,
     notes,
-    category,
     updated_by: currentUser.id,
   });
 
@@ -536,14 +439,11 @@ async function addItem() {
 
   if (error) return setMsg(itemsMsg, error.message, "bad");
 
-  itemDate.value = "";
   itemTitle.value = "";
   itemLocation.value = "";
   itemNotes.value = "";
-  itemCategory.value = "activity";
 
   setMsg(itemsMsg, "Added.", "ok");
-  await logActivity(currentTrip.id, "added_item", { title, category });
   await loadItems();
 }
 
@@ -555,7 +455,7 @@ async function loadItems() {
 
   const { data, error } = await supabase
     .from("itinerary_items")
-    .select("id,day_date,title,location,notes,category,updated_at")
+    .select("id,day_date,title,location,notes,updated_at")
     .eq("trip_id", currentTrip.id)
     .order("day_date", { ascending: true })
     .order("updated_at", { ascending: false });
@@ -578,12 +478,11 @@ function renderItemTile(it) {
   const date = it.day_date ? esc(it.day_date) : "No date";
   const loc = it.location ? esc(it.location) : "No location";
   const updated = it.updated_at ? new Date(it.updated_at).toLocaleString() : "";
-  const icon = getCategoryIcon(it.category);
 
   el.innerHTML = `
     <div class="tileTop">
       <div>
-        <div class="tileTitle">${icon} ${esc(it.title)}</div>
+        <div class="tileTitle">${esc(it.title)}</div>
         <div class="tileMeta">${date} · ${loc}</div>
       </div>
       <div class="pills" style="margin-top:0;">
@@ -591,12 +490,13 @@ function renderItemTile(it) {
       </div>
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
-    ${updated ? `<div class="pills"><span class="pill">${esc(it.category)}</span><span class="pill">Updated: ${esc(updated)}</span><span class="pill">${esc(shortId(it.id))}</span></div>` : ""}
+    ${updated ? `<div class="pills"><span class="pill">Updated: ${esc(updated)}</span><span class="pill">${esc(shortId(it.id))}</span></div>` : ""}
   `;
 
   return el;
 }
 
+// ---- edit/delete (same as before)
 async function openEditDialog(itemId) {
   if (!currentTrip) return;
 
@@ -604,7 +504,7 @@ async function openEditDialog(itemId) {
 
   const { data, error } = await supabase
     .from("itinerary_items")
-    .select("id,day_date,title,location,notes,category")
+    .select("id,day_date,title,location,notes")
     .eq("id", itemId)
     .limit(1);
 
@@ -618,7 +518,6 @@ async function openEditDialog(itemId) {
   editTitle.value = it.title || "";
   editLocation.value = it.location || "";
   editNotes.value = it.notes || "";
-  editCategory.value = it.category || "activity";
 
   editDialog.showModal();
 }
@@ -632,7 +531,6 @@ async function saveEdit() {
     title: (editTitle.value || "").trim(),
     location: (editLocation.value || "").trim() || null,
     notes: (editNotes.value || "").trim() || null,
-    category: (editCategory.value || "activity").trim(),
     updated_by: currentUser.id,
     updated_at: new Date().toISOString(),
   };
@@ -674,359 +572,17 @@ async function deleteItem() {
   await loadItems();
 }
 
-// ---- expenses
-async function addExpense() {
-  if (!currentTrip) return setMsg(expensesMsg, "No trip selected.", "warn");
-
-  const title = (expenseTitle.value || "").trim();
-  const amount = parseFloat(expenseAmount.value) || 0;
-  const expense_date = expenseDate.value || null;
-  const category = (expenseCategory.value || "general").trim();
-  const notes = (expenseNotes.value || "").trim() || null;
-
-  if (!title) return setMsg(expensesMsg, "Description required.", "warn");
-  if (amount <= 0) return setMsg(expensesMsg, "Amount must be greater than 0.", "warn");
-
-  addExpenseBtn.disabled = true;
-  setMsg(expensesMsg, "Adding…", "warn");
-
-  const { error } = await supabase.from("expenses").insert({
-    trip_id: currentTrip.id,
-    title,
-    amount,
-    expense_date,
-    category,
-    notes,
-    currency: currentTrip.currency || "USD",
-    paid_by: currentUser.id,
-  });
-
-  addExpenseBtn.disabled = false;
-
-  if (error) return setMsg(expensesMsg, error.message, "bad");
-
-  expenseTitle.value = "";
-  expenseAmount.value = "";
-  expenseDate.value = "";
-  expenseNotes.value = "";
-  expenseCategory.value = "general";
-
-  setMsg(expensesMsg, "Expense added.", "ok");
-  await logActivity(currentTrip.id, "added_expense", { title, amount });
-  await loadExpenses();
-}
-
-async function loadExpenses() {
-  if (!currentTrip) return;
-
-  setMsg(expensesMsg, "Loading expenses…", "warn");
-  expensesList.innerHTML = "";
-  budgetSummary.innerHTML = "";
-
-  const { data, error } = await supabase
-    .from("expenses")
-    .select("id,title,amount,expense_date,category,paid_by,currency")
-    .eq("trip_id", currentTrip.id)
-    .order("expense_date", { ascending: false });
-
-  if (error) return setMsg(expensesMsg, error.message, "bad");
-
-  if (!data?.length) {
-    setMsg(expensesMsg, "No expenses yet.", "warn");
-    budgetSummary.innerHTML = renderBudgetSummary([], currentTrip.currency);
-    return;
-  }
-
-  setMsg(expensesMsg, "", "");
-
-  // Render budget summary
-  budgetSummary.innerHTML = renderBudgetSummary(data, currentTrip.currency);
-
-  // Render expense tiles
-  for (const exp of data) {
-    expensesList.appendChild(renderExpenseTile(exp));
-  }
-}
-
-function renderBudgetSummary(expenses, currency) {
-  const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const byCategory = {};
-  const byPerson = {};
-
-  expenses.forEach((e) => {
-    byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
-    byPerson[e.paid_by] = (byPerson[e.paid_by] || 0) + e.amount;
-  });
-
-  let html = `<div class="budgetGrid">`;
-  html += `<div class="budgetCard"><div class="budgetLabel">Total spent</div><div class="budgetAmount">${fmtCurrency(total, currency)}</div></div>`;
-  
-  Object.entries(byCategory).forEach(([cat, amount]) => {
-    const icon = getCategoryIcon(cat);
-    html += `<div class="budgetCard"><div class="budgetLabel">${icon} ${esc(cat)}</div><div class="budgetAmount">${fmtCurrency(amount, currency)}</div></div>`;
-  });
-
-  html += `</div>`;
-  return html;
-}
-
-function renderExpenseTile(exp) {
-  const el = document.createElement("div");
-  el.className = "tile";
-  const icon = getCategoryIcon(exp.category);
-  const amount = fmtCurrency(exp.amount, exp.currency);
-
-  el.innerHTML = `
-    <div class="tileTop">
-      <div>
-        <div class="tileTitle">${icon} ${esc(exp.title)}</div>
-        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(shortId(exp.paid_by))}</div>
-      </div>
-      <div class="expenseAmount">${amount}</div>
-    </div>
-  `;
-
-  return el;
-}
-
-// ---- members
-async function loadMembers() {
-  if (!currentTrip) return;
-
-  setMsg(membersMsg, "Loading members…", "warn");
-  membersList.innerHTML = "";
-
-  const { data, error } = await supabase
-    .from("trip_members")
-    .select("user_id,role,joined_at")
-    .eq("trip_id", currentTrip.id);
-
-  if (error) return setMsg(membersMsg, error.message, "bad");
-
-  if (!data?.length) return setMsg(membersMsg, "No members yet.", "warn");
-
-  setMsg(membersMsg, "", "");
-
-  for (const member of data) {
-    const email = await getUserEmail(member.user_id);
-    membersList.appendChild(renderMemberTile(member, email));
-  }
-}
-
-function renderMemberTile(member, email) {
-  const el = document.createElement("div");
-  el.className = "tile";
-  const isCurrentUser = member.user_id === currentUser.id;
-  const isOwner = currentRole === "owner";
-
-  el.innerHTML = `
-    <div class="tileTop">
-      <div>
-        <div class="tileTitle">${esc(email)}</div>
-        <div class="tileMeta">Joined ${new Date(member.joined_at).toLocaleDateString()}</div>
-      </div>
-      <div class="pills">
-        <span class="pill">${esc(member.role)}</span>
-        ${!isCurrentUser && isOwner ? `<button class="pill danger" data-action="remove-member" data-user="${esc(member.user_id)}" type="button">Remove</button>` : ""}
-      </div>
-    </div>
-  `;
-
-  return el;
-}
-
-// ---- packing lists
-async function createPackingList() {
-  if (!currentTrip) return;
-
-  const title = (packingListTitle.value || "").trim();
-  if (!title) return setMsg(packingMsg, "List name required.", "warn");
-
-  createPackingListBtn.disabled = true;
-  setMsg(packingMsg, "Creating…", "warn");
-
-  const { error } = await supabase.from("packing_lists").insert({
-    trip_id: currentTrip.id,
-    title,
-    created_by: currentUser.id,
-  });
-
-  createPackingListBtn.disabled = false;
-
-  if (error) return setMsg(packingMsg, error.message, "bad");
-
-  packingListTitle.value = "";
-  setMsg(packingMsg, "Packing list created.", "ok");
-  await loadPackingLists();
-}
-
-async function loadPackingLists() {
-  if (!currentTrip) return;
-
-  packingListsContainer.innerHTML = "";
-
-  const { data, error } = await supabase
-    .from("packing_lists")
-    .select("id,title,created_by")
-    .eq("trip_id", currentTrip.id);
-
-  if (error) {
-    packingListsContainer.innerHTML = `<div class="msg bad">${esc(error.message)}</div>`;
-    return;
-  }
-
-  if (!data?.length) {
-    packingListsContainer.innerHTML = `<div class="msg warn">No packing lists yet. Create one above.</div>`;
-    return;
-  }
-
-  for (const list of data) {
-    packingListsContainer.appendChild(await renderPackingList(list));
-  }
-}
-
-async function renderPackingList(list) {
-  const { data: items } = await supabase
-    .from("packing_items")
-    .select("id,item,packed,assigned_to")
-    .eq("list_id", list.id);
-
-  const container = document.createElement("div");
-  container.className = "panel";
-
-  const packed = (items || []).filter((i) => i.packed).length;
-  const total = items?.length || 0;
-  const progress = total > 0 ? Math.round((packed / total) * 100) : 0;
-
-  let html = `<div class="panelTitle">${esc(list.title)} (${packed}/${total})</div>`;
-  html += `<div class="progressBar"><div class="progressFill" style="width:${progress}%"></div></div>`;
-
-  const itemsHtml = (items || [])
-    .map(
-      (item) =>
-        `<div class="packingItem"><input type="checkbox" ${item.packed ? "checked" : ""} data-item-id="${esc(item.id)}" class="packingCheckbox" /> <span>${esc(item.item)}</span></div>`
-    )
-    .join("");
-
-  html += itemsHtml;
-
-  const newItemInput = document.createElement("input");
-  newItemInput.className = "input";
-  newItemInput.placeholder = "Add item…";
-  newItemInput.style.marginTop = "8px";
-
-  const addBtn = document.createElement("button");
-  addBtn.className = "btn primary";
-  addBtn.textContent = "Add to list";
-  addBtn.style.marginTop = "8px";
-  addBtn.onclick = () => addPackingItem(list.id, newItemInput.value);
-
-  container.innerHTML = html;
-  container.appendChild(newItemInput);
-  container.appendChild(addBtn);
-
-  return container;
-}
-
-async function addPackingItem(listId, item) {
-  const itemText = (item || "").trim();
-  if (!itemText) return;
-
-  await supabase.from("packing_items").insert({
-    list_id: listId,
-    item: itemText,
-  });
-
-  await loadPackingLists();
-}
-
-// ---- activity log
-async function logActivity(tripId, action, details = {}) {
-  if (!currentTrip) return;
-
-  await supabase.from("activity_log").insert({
-    trip_id: tripId,
-    user_id: currentUser.id,
-    action,
-    details,
-  });
-}
-
-async function loadActivityLog() {
-  if (!currentTrip) return;
-
-  activityLog.innerHTML = "";
-
-  const { data, error } = await supabase
-    .from("activity_log")
-    .select("user_id,action,details,created_at")
-    .eq("trip_id", currentTrip.id)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error || !data?.length) {
-    activityLog.innerHTML = `<div class="msg">No activity yet.</div>`;
-    return;
-  }
-
-  for (const log of data) {
-    const email = await getUserEmail(log.user_id);
-    activityLog.appendChild(renderActivityItem(log, email));
-  }
-}
-
-function renderActivityItem(log, email) {
-  const el = document.createElement("div");
-  el.className = "tile";
-  const time = new Date(log.created_at).toLocaleString();
-  const actionText = log.action.replace(/_/g, " ");
-
-  el.innerHTML = `
-    <div>
-      <div class="tileTitle">${esc(actionText)}</div>
-      <div class="tileMeta">${esc(email)} · ${time}</div>
-    </div>
-  `;
-
-  return el;
-}
-
 // ---- realtime
 function setupRealtime() {
   cleanupRealtime();
   if (!currentTrip) return;
 
   realtimeChannel = supabase
-    .channel(`trip:${currentTrip.id}`)
+    .channel(`itinerary:${currentTrip.id}`)
     .on(
       "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "itinerary_items",
-        filter: `trip_id=eq.${currentTrip.id}`,
-      },
+      { event: "*", schema: "public", table: "itinerary_items", filter: `trip_id=eq.${currentTrip.id}` },
       () => loadItems()
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "expenses",
-        filter: `trip_id=eq.${currentTrip.id}`,
-      },
-      () => loadExpenses()
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "trip_members",
-        filter: `trip_id=eq.${currentTrip.id}`,
-      },
-      () => loadMembers()
     )
     .subscribe();
 }
@@ -1045,7 +601,6 @@ function goTripsView() {
   navTrips.classList.add("navActive");
   navTrip.classList.remove("navActive");
 }
-
 function goTripView() {
   if (!currentTrip) return;
   show(tripCard);
@@ -1070,16 +625,9 @@ saveTripBtn.addEventListener("click", (e) => {
 });
 
 addItemBtn.addEventListener("click", addItem);
-addExpenseBtn.addEventListener("click", addExpense);
-createPackingListBtn.addEventListener("click", createPackingList);
 
 navTrips.addEventListener("click", goTripsView);
 navTrip.addEventListener("click", goTripView);
-
-// Tab navigation
-document.querySelectorAll(".tabBtn").forEach((btn) => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-});
 
 saveEditBtn.addEventListener("click", (e) => {
   e.preventDefault();
@@ -1095,28 +643,6 @@ itemsList.addEventListener("click", (e) => {
   const itemId = tile?.dataset?.itemId;
   if (!itemId) return;
   if (action === "edit") openEditDialog(itemId);
-});
-
-membersList.addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-action]");
-  if (!btn) return;
-  if (btn.dataset.action === "remove-member") {
-    const userId = btn.dataset.user;
-    const ok = confirm("Remove this member from the trip?");
-    if (ok) {
-      await supabase.from("trip_members").delete().eq("trip_id", currentTrip.id).eq("user_id", userId);
-      await loadMembers();
-    }
-  }
-});
-
-packingListsContainer.addEventListener("change", async (e) => {
-  if (e.target.classList.contains("packingCheckbox")) {
-    const itemId = e.target.dataset.itemId;
-    const packed = e.target.checked;
-    await supabase.from("packing_items").update({ packed }).eq("id", itemId);
-    await loadPackingLists();
-  }
 });
 
 // ---- init
