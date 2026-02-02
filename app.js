@@ -397,13 +397,24 @@ function renderTripTile(t) {
         <div class="tileMeta">${esc(fmtRange(t.start_date, t.end_date))}</div>
         <div class="tileMeta">Trip ID: ${esc(shortId(t.id))}</div>
       </div>
-      <div class="pill accent">${getCountdown(t.start_date)}</div>
     </div>
     <div class="pills">
+      <span class="pill countdown-pill">${getCountdown(t.start_date)}</span>
       <span class="pill currency-pill">Loading…</span>
       ${t.description ? `<span class="pill">Has notes</span>` : `<span class="pill">No notes</span>`}
     </div>
   `;
+  
+  // Update countdown every second
+  const countdownInterval = setInterval(() => {
+    const countdownPill = el.querySelector(".countdown-pill");
+    if (countdownPill && el.parentElement) {
+      countdownPill.textContent = getCountdown(t.start_date);
+    } else {
+      clearInterval(countdownInterval);
+    }
+  }, 1000);
+  
   el.addEventListener("click", () => openTripById(t.id));
   return el;
 }
