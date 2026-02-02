@@ -70,7 +70,6 @@ const tripCard = $("tripCard");
 const loginBtn = $("loginBtn");
 const logoutBtn = $("logoutBtn");
 const userBtn = $("userBtn");
-const nicknameBtn = $("nicknameBtn");
 const a2hsOverlay = $("a2hsOverlay");
 const a2hsClose = $("a2hsClose");
 
@@ -248,7 +247,6 @@ function signedOutUI() {
   hide(logoutBtn);
   hide(refreshBtn);
   hide(userBtn);
-  hide(nicknameBtn);
   
   document.querySelector(".topbar").classList.add("hidden");
 
@@ -289,13 +287,12 @@ async function signedInUI(user) {
   show(logoutBtn);
   show(refreshBtn);
   show(userBtn);
-  show(nicknameBtn);
   document.querySelector(".topbar").classList.remove("hidden");
   const metaDisplayName = currentUser.user_metadata?.display_name || "";
   if (metaDisplayName) setStoredNickname(currentUser.id, metaDisplayName);
   userBtn.textContent = getCurrentDisplayName();
-  const displayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
-  nicknameBtn.textContent = displayName ? displayName : "☺︎";
+  userBtn.style.cursor = "pointer";
+  userBtn.title = "Click to set display name";
 
   await handleDeepLinks();
   await loadTrips();
@@ -1486,7 +1483,7 @@ togglePackingBtn.addEventListener("click", () => {
   addPackingPanel.classList.toggle("hidden");
 });
 
-nicknameBtn.addEventListener("click", () => {
+userBtn.addEventListener("click", () => {
   if (!currentUser) return;
   const currentDisplayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
   const next = prompt("Set your display name", currentDisplayName || "");
@@ -1499,7 +1496,6 @@ nicknameBtn.addEventListener("click", () => {
     if (data?.user) currentUser = data.user;
     setStoredNickname(currentUser.id, trimmed);
     userBtn.textContent = getCurrentDisplayName();
-    nicknameBtn.textContent = trimmed ? trimmed : "☺︎";
     loadMembers();
   });
 });
