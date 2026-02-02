@@ -1004,18 +1004,23 @@ async function addExpense() {
   const paid_by = expensePaidBy.value || currentUser.id;
 
   // Handle split logic
-  let split_type = "all";
+  let split_type = "none";
   let split_with = null;
   
   if (expenseSplit.checked) {
-    split_type = "all";
-  } else {
+    const allBoxes = document.querySelectorAll(".split-member-checkbox");
     const checkedBoxes = document.querySelectorAll(".split-member-checkbox:checked");
     if (checkedBoxes.length === 0) {
       return setMsg(expensesMsg, "Select at least one member to split with.", "warn");
     }
-    split_type = "custom";
-    split_with = Array.from(checkedBoxes).map(cb => cb.value);
+
+    if (checkedBoxes.length === allBoxes.length) {
+      split_type = "all";
+      split_with = null;
+    } else {
+      split_type = "custom";
+      split_with = Array.from(checkedBoxes).map(cb => cb.value);
+    }
   }
 
   if (!title) return setMsg(expensesMsg, "Description required.", "warn");
@@ -1649,12 +1654,15 @@ refreshBtn.addEventListener("click", () => {
       // Calculate how much each person should pay based on split type
       let splitMembers = [];
     
-      if (exp.split_type === 'all' || !exp.split_type) {
+      if (exp.split_type === "all" || !exp.split_type) {
         // Split among all members
         splitMembers = members.map(m => m.user_id);
-      } else if (exp.split_type === 'custom' && exp.split_with) {
+      } else if (exp.split_type === "custom" && exp.split_with) {
         // Split among selected members
         splitMembers = exp.split_with;
+      } else if (exp.split_type === "none") {
+        // Not split: only the payer should cover it
+        splitMembers = exp.paid_by ? [exp.paid_by] : [];
       }
     
       if (splitMembers.length > 0) {
@@ -1666,7 +1674,7 @@ refreshBtn.addEventListener("click", () => {
         });
       }
   expenseSplit.checked = true;
-  expenseSplitMembers.style.display = "none";
+  expenseSplitMembers.style.display = "block";
 
 if (toggleCreateBtn && createPanel) {
   toggleCreateBtn.addEventListener("click", () => {
@@ -1695,11 +1703,11 @@ togglePackingBtn.addEventListener("click", () => {
 
 expenseSplit.addEventListener("change", () => {
   if (expenseSplit.checked) {
-    expenseSplitMembers.style.display = "none";
-    // Check all members
+    expenseSplitMembers.style.display = "block";
+    // Check all members by default
     document.querySelectorAll(".split-member-checkbox").forEach(cb => cb.checked = true);
   } else {
-    expenseSplitMembers.style.display = "block";
+    expenseSplitMembers.style.display = "none";
   }
 });
 });
