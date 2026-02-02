@@ -1224,6 +1224,31 @@ async function deleteExpense(expenseId) {
 }
 
 // ---- members
+async function calculateMemberBalance(userId) {
+  if (!currentTrip) return 0;
+
+  // Calculate what this member paid
+  const { data: paidExpenses } = await supabase
+    .from("expenses")
+    .select("amount")
+    .eq("trip_id", currentTrip.id)
+    .eq("paid_by", userId);
+  
+  const totalPaid = (paidExpenses || []).reduce((sum, exp) => sum + (exp.amount || 0), 0);
+
+  // Calculate what this member owes from splits
+  const { data: splits } = await supabase
+    .from("expense_splits")
+    .select("share_amount, expenses!inner(trip_id)")
+    .eq("user_id", userId)
+    .eq("expenses.trip_id", currentTrip.id);
+
+  const totalOwed = (splits || []).reduce((sum, split) => sum + (split.share_amount || 0), 0);
+
+  // Positive means they are owed money, negative means they owe money
+  return totalPaid - totalOwed;
+}
+
 async function loadMembers() {
   if (!currentTrip) return;
 
@@ -1243,22 +1268,32 @@ async function loadMembers() {
 
   for (const member of data) {
     const email = await getUserEmail(member.user_id);
-    membersList.appendChild(renderMemberTile(member, email));
+    const balance = await calculateMemberBalance(member.user_id);
+    membersList.appendChild(renderMemberTile(member, email, balance));
   }
 }
 
-function renderMemberTile(member, email) {
+function renderMemberTile(member, email, balance = 0) {
   const el = document.createElement("div");
   el.className = "tile";
   const isCurrentUser = member.user_id === currentUser.id;
   const isOwner = currentRole === "owner";
   const displayName = isCurrentUser ? (getStoredNickname(currentUser.id) || email) : email;
+  
+  let balanceText = "";
+  if (balance > 0) {
+    balanceText = `<span style="color: #4ade80;">Is owed ${fmtCurrency(balance, currentTrip.currency)}</span>`;
+  } else if (balance < 0) {
+    balanceText = `<span style="color: #f87171;">Owes ${fmtCurrency(Math.abs(balance), currentTrip.currency)}</span>`;
+  } else {
+    balanceText = `<span style="color: #94a3b8;">Settled up</span>`;
+  }
 
   el.innerHTML = `
     <div class="tileTop">
       <div>
         <div class="tileTitle">${esc(displayName)}</div>
-        <div class="tileMeta">Joined ${new Date(member.joined_at).toLocaleDateString()}</div>
+        <div class="tileMeta">Joined ${new Date(member.joined_at).toLocaleDateString()} · ${balanceText}</div>
       </div>
       <div class="pills">
         <span class="pill">${esc(member.role)}</span>
