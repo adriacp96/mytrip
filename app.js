@@ -233,6 +233,9 @@ async function sendMagicLink() {
   if (data?.user) {
     setMsg(authMsg, "Welcome!", "ok");
   }
+  if (data?.session?.user) {
+    await signedInUI(data.session.user);
+  }
 }
 
 async function logOut() {
