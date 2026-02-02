@@ -1,6 +1,6 @@
 :root {
-  --bg: #0b0f19;
-  --card: rgba(17, 24, 42, 0.82);
+  --bg: #000000;
+  --card: rgba(17, 24, 42, 0.92);
   --text: #eef2ff;
   --muted: rgba(238, 242, 255, 0.68);
   --line: rgba(255, 255, 255, 0.09);
@@ -17,14 +17,24 @@
   --shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff;
+    --card: rgba(255, 255, 255, 0.95);
+    --text: #0b0f19;
+    --muted: rgba(11, 15, 25, 0.6);
+    --line: rgba(11, 15, 25, 0.12);
+    --line2: rgba(11, 15, 25, 0.2);
+    --accent: #ff2d2d;
+    --accent2: rgba(255, 45, 45, 0.14);
+    --shadow: 0 16px 45px rgba(0, 0, 0, 0.12);
+  }
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 html {
-  background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(255,45,45,0.18), transparent 60%),
-    radial-gradient(900px 520px at 85% 0%, rgba(99,102,241,0.16), transparent 55%),
-    var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
 }
 body {
   margin: 0;
