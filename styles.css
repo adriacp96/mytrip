@@ -46,7 +46,8 @@ body {
   min-height: 100svh;
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  background: transparent;
+  background-image: linear-gradient(to top, #30cfd0 0%, #330867 100%);
+  background-attachment: fixed;
   position: relative;
   text-shadow: 0 1px 3px rgba(255, 255, 255, 0.3);
 }
