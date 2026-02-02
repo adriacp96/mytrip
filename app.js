@@ -822,38 +822,28 @@ async function reorderItems(draggedId, targetId) {
 async function moveItemUp(itemId) {
   if (!currentTrip) return;
 
-  // Fetch all items for the trip with same date
-  const { data: item, error: itemError } = await supabase
-    .from("itinerary_items")
-    .select("id,order_seq,day_date")
-    .eq("id", itemId)
-    .limit(1);
-
-  if (itemError || !item?.[0]) return;
-
-  const currentItem = item[0];
-
+  // Fetch all items for the trip
   const { data: allItems, error: fetchError } = await supabase
     .from("itinerary_items")
     .select("id,order_seq,day_date")
     .eq("trip_id", currentTrip.id)
-    .eq("day_date", currentItem.day_date)
+    .order("day_date", { ascending: true })
     .order("order_seq", { ascending: true });
 
-  if (fetchError) return;
+  if (fetchError || !allItems) return;
 
   const idx = allItems.findIndex((x) => x.id === itemId);
   if (idx <= 0) return; // Already first
 
-  // Swap with previous
-  [allItems[idx - 1].order_seq, allItems[idx].order_seq] = [allItems[idx].order_seq, allItems[idx - 1].order_seq];
+  // Swap in the array
+  [allItems[idx - 1], allItems[idx]] = [allItems[idx], allItems[idx - 1]];
 
-  // Update both items
-  for (const itm of [allItems[idx - 1], allItems[idx]]) {
+  // Reassign all order_seq values sequentially
+  for (let i = 0; i < allItems.length; i++) {
     await supabase
       .from("itinerary_items")
-      .update({ order_seq: itm.order_seq })
-      .eq("id", itm.id);
+      .update({ order_seq: i })
+      .eq("id", allItems[i].id);
   }
 
   await loadItems();
@@ -862,37 +852,28 @@ async function moveItemUp(itemId) {
 async function moveItemDown(itemId) {
   if (!currentTrip) return;
 
-  const { data: item, error: itemError } = await supabase
-    .from("itinerary_items")
-    .select("id,order_seq,day_date")
-    .eq("id", itemId)
-    .limit(1);
-
-  if (itemError || !item?.[0]) return;
-
-  const currentItem = item[0];
-
+  // Fetch all items for the trip
   const { data: allItems, error: fetchError } = await supabase
     .from("itinerary_items")
     .select("id,order_seq,day_date")
     .eq("trip_id", currentTrip.id)
-    .eq("day_date", currentItem.day_date)
+    .order("day_date", { ascending: true })
     .order("order_seq", { ascending: true });
 
-  if (fetchError) return;
+  if (fetchError || !allItems) return;
 
   const idx = allItems.findIndex((x) => x.id === itemId);
   if (idx >= allItems.length - 1) return; // Already last
 
-  // Swap with next
-  [allItems[idx].order_seq, allItems[idx + 1].order_seq] = [allItems[idx + 1].order_seq, allItems[idx].order_seq];
+  // Swap in the array
+  [allItems[idx], allItems[idx + 1]] = [allItems[idx + 1], allItems[idx]];
 
-  // Update both items
-  for (const itm of [allItems[idx], allItems[idx + 1]]) {
+  // Reassign all order_seq values sequentially
+  for (let i = 0; i < allItems.length; i++) {
     await supabase
       .from("itinerary_items")
-      .update({ order_seq: itm.order_seq })
-      .eq("id", itm.id);
+      .update({ order_seq: i })
+      .eq("id", allItems[i].id);
   }
 
   await loadItems();
@@ -1225,13 +1206,20 @@ async function renderPackingList(list) {
   const total = items?.length || 0;
   const progress = total > 0 ? Math.round((packed / total) * 100) : 0;
 
-  let html = `<div class="panelTitle">${esc(list.title)} (${packed}/${total})</div>`;
+  let html = `<div style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="panelTitle">${esc(list.title)} (${packed}/${total})</div>
+    <button class="btn ghost small" data-action="delete-list" data-list-id="${esc(list.id)}" type="button">Delete List</button>
+  </div>`;
   html += `<div class="progressBar"><div class="progressFill" style="width:${progress}%"></div></div>`;
 
   const itemsHtml = (items || [])
     .map(
       (item) =>
-        `<div class="packingItem"><input type="checkbox" ${item.packed ? "checked" : ""} data-item-id="${esc(item.id)}" class="packingCheckbox" /> <span>${esc(item.item)}</span></div>`
+        `<div class="packingItem" style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" ${item.packed ? "checked" : ""} data-item-id="${esc(item.id)}" class="packingCheckbox" /> 
+          <span style="flex: 1;">${esc(item.item)}</span>
+          <button class="btn ghost small" data-action="delete-packing-item" data-item-id="${esc(item.id)}" type="button" style="padding: 2px 6px; font-size: 11px;">×</button>
+        </div>`
     )
     .join("");
 
@@ -1263,6 +1251,34 @@ async function addPackingItem(listId, item) {
     list_id: listId,
     item: itemText,
   });
+
+  await loadPackingLists();
+}
+
+async function deletePackingList(listId) {
+  if (!listId) return;
+  if (!confirm("Delete this packing list and all its items?")) return;
+
+  const { error } = await supabase.from("packing_lists").delete().eq("id", listId);
+
+  if (error) {
+    setMsg(packingMsg, error.message, "bad");
+    return;
+  }
+
+  setMsg(packingMsg, "Packing list deleted.", "ok");
+  await loadPackingLists();
+}
+
+async function deletePackingItem(itemId) {
+  if (!itemId) return;
+
+  const { error } = await supabase.from("packing_items").delete().eq("id", itemId);
+
+  if (error) {
+    setMsg(packingMsg, error.message, "bad");
+    return;
+  }
 
   await loadPackingLists();
 }
@@ -1522,6 +1538,20 @@ packingListsContainer.addEventListener("change", async (e) => {
     const packed = e.target.checked;
     await supabase.from("packing_items").update({ packed }).eq("id", itemId);
     await loadPackingLists();
+  }
+});
+
+packingListsContainer.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  
+  if (action === "delete-list") {
+    const listId = btn.dataset.listId;
+    if (listId) deletePackingList(listId);
+  } else if (action === "delete-packing-item") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) deletePackingItem(itemId);
   }
 });
 
