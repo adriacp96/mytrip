@@ -41,6 +41,7 @@
               <input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email" />
               <button id="loginBtn" class="btn primary">Send link</button>
             </div>
+
             <div id="authMsg" class="msg"></div>
 
             <div class="divider"></div>
@@ -53,6 +54,10 @@
                 <li>Paste Supabase URL + anon key in <code>app.js</code></li>
               </ul>
             </details>
+
+            <div class="hint">
+              Tip: you can share a join link like <code>?join=&lt;tripId&gt;</code>
+            </div>
           </div>
         </section>
 
@@ -80,7 +85,7 @@
                 <input id="joinTripId" class="input" placeholder="Trip ID (uuid)" />
                 <button id="joinTripBtn" class="btn soft">Join</button>
               </div>
-              <div class="hint">Ask a friend to share the Trip ID.</div>
+              <div class="hint">Ask a friend to share the Trip ID or a join link.</div>
             </div>
 
             <div class="sectionTitle">Trips</div>
@@ -99,6 +104,7 @@
               <div class="row wrap">
                 <div id="tripIdBadge" class="chip"></div>
                 <button id="copyTripIdBtn" class="btn ghost">Copy ID</button>
+                <button id="copyJoinLinkBtn" class="btn ghost">Copy Join Link</button>
               </div>
             </div>
 
@@ -139,6 +145,60 @@
           </div>
         </section>
       </main>
+
+      <!-- MOBILE BOTTOM BAR -->
+      <nav id="bottomBar" class="bottomBar hidden" aria-label="Navigation">
+        <button id="navTrips" class="navBtn navActive" type="button">
+          <span class="navIcon">🗂️</span>
+          <span class="navText">Trips</span>
+        </button>
+        <button id="navTrip" class="navBtn" type="button" disabled>
+          <span class="navIcon">🧭</span>
+          <span class="navText">Trip</span>
+        </button>
+      </nav>
+
+      <!-- EDIT MODAL -->
+      <dialog id="editDialog" class="dialog">
+        <form method="dialog" class="dialogCard">
+          <div class="dialogHeader">
+            <div>
+              <div class="dialogTitle">Edit item</div>
+              <div class="dialogSub muted">Update title, location, notes, date.</div>
+            </div>
+            <button id="editCloseBtn" class="btn ghost" value="cancel">Close</button>
+          </div>
+
+          <div class="stack">
+            <input type="hidden" id="editId" />
+
+            <div class="grid2">
+              <div>
+                <label class="label">Date</label>
+                <input id="editDate" class="input" type="date" />
+              </div>
+              <div>
+                <label class="label">Title</label>
+                <input id="editTitle" class="input" placeholder="Title" />
+              </div>
+              <div>
+                <label class="label">Location</label>
+                <input id="editLocation" class="input" placeholder="Location" />
+              </div>
+              <div>
+                <label class="label">Notes</label>
+                <input id="editNotes" class="input" placeholder="Notes" />
+              </div>
+            </div>
+
+            <div class="row wrap">
+              <button id="saveEditBtn" class="btn primary" value="default">Save</button>
+              <button id="deleteItemBtn" class="btn danger" value="default" type="button">Delete</button>
+              <div id="editMsg" class="msg"></div>
+            </div>
+          </div>
+        </form>
+      </dialog>
 
       <footer class="footer">
         <span class="muted">GitHub Pages · Supabase · Realtime</span>
