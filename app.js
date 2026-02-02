@@ -798,7 +798,8 @@ function renderBudgetSummary(expenses, currency) {
 
 function renderExpenseTile(exp) {
   const el = document.createElement("div");
-  el.className = "tile";
+  el.className = "tile swipeable";
+  el.dataset.expenseId = exp.id;
   const icon = getCategoryIcon(exp.category);
   const amount = fmtCurrency(exp.amount, exp.currency);
 
@@ -1149,6 +1150,41 @@ expensesList.addEventListener("click", (e) => {
   if (!btn) return;
   if (btn.dataset.action === "delete-expense") {
     deleteExpense(btn.dataset.expenseId);
+  }
+});
+
+let swipeStartX = 0;
+let swipeActiveTile = null;
+
+expensesList.addEventListener("touchstart", (e) => {
+  const tile = e.target.closest(".tile.swipeable");
+  if (!tile) return;
+  swipeActiveTile = tile;
+  swipeStartX = e.touches[0].clientX;
+  tile.classList.remove("swipeHint");
+}, { passive: true });
+
+expensesList.addEventListener("touchmove", (e) => {
+  if (!swipeActiveTile) return;
+  const currentX = e.touches[0].clientX;
+  const deltaX = Math.min(0, currentX - swipeStartX);
+  swipeActiveTile.style.transform = `translateX(${deltaX}px)`;
+  if (deltaX < -80) swipeActiveTile.classList.add("swipeHint");
+  else swipeActiveTile.classList.remove("swipeHint");
+}, { passive: true });
+
+expensesList.addEventListener("touchend", async () => {
+  if (!swipeActiveTile) return;
+  const computed = getComputedStyle(swipeActiveTile);
+  const matrix = new DOMMatrixReadOnly(computed.transform);
+  const translateX = matrix.m41 || 0;
+  const expenseId = swipeActiveTile.dataset.expenseId;
+  swipeActiveTile.style.transform = "";
+  swipeActiveTile.classList.remove("swipeHint");
+  swipeActiveTile = null;
+
+  if (translateX <= -80 && expenseId) {
+    await deleteExpense(expenseId);
   }
 });
 

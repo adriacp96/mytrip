@@ -205,6 +205,14 @@ h2 { font-size: 18px; }
   transition: transform .08s ease, border-color .08s ease;
 }
 .tile:hover { transform: translateY(-1px); border-color: var(--line2); }
+.tile.swipeable {
+  touch-action: pan-y;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.tile.swipeHint {
+  border-color: rgba(251,113,133,0.5);
+  background: rgba(251,113,133,0.06);
+}
 
 .tileTop {
   display: flex;
