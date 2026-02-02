@@ -385,7 +385,12 @@ async function getUserNameWithEmail(userId) {
   const { data } = await supabase.auth.admin?.getUserById(userId);
   const email = data?.user?.email || "";
   const displayName = data?.user?.user_metadata?.display_name || "";
-  const result = formatNameWithEmail(displayName, email) || email || "";
+  let result = "";
+  if (displayName) {
+    result = displayName;
+  } else if (email) {
+    result = email;
+  }
   userNameCache[userId] = result;
   return result;
 }
