@@ -1349,8 +1349,10 @@ function renderMemberTile(member, email, balanceInfo = { total: 0, details: {} }
       const otherName = memberNames[otherUserId] || shortId(otherUserId);
       
       if (amount > 0) {
+        el.classList.add("owed");
         balanceText = `<span style="color: #4ade80;">Is owed ${fmtCurrency(amount, currentTrip.currency)} by ${esc(otherName)}</span>`;
       } else if (amount < 0) {
+        el.classList.add("owes");
         balanceText = `<span style="color: #f87171;">Owes ${fmtCurrency(Math.abs(amount), currentTrip.currency)} to ${esc(otherName)}</span>`;
       }
     }
