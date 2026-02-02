@@ -426,6 +426,7 @@ async function openTripById(tripId) {
   else setMsg(tripMsg, "", "");
 
   show(tripCard);
+  show(bottomBarTabs);
   navTrip.disabled = false;
   navTrips.classList.remove("navActive");
   navTrip.classList.add("navActive");
