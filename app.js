@@ -9,7 +9,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.addEventListener("load", () => {
   if (typeof VANTA !== "undefined") {
     VANTA.CLOUDS({
-      el: "body",
+      el: "#vantaBackground",
       mouseControls: true,
       touchControls: true,
       gyroControls: false,
