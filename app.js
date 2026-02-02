@@ -178,6 +178,7 @@ let currentTrip = null;      // full trip row
 let currentRole = null;      // owner/editor/viewer
 let realtimeChannel = null;
 let userCache = {};          // cache for user info
+let userNameCache = {};      // cache for display name + email
 let draggedItem = null;      // for drag-and-drop reordering
 
 // ---- auth
@@ -279,7 +280,12 @@ function setStoredNickname(userId, nickname) {
 function getCurrentDisplayName() {
   if (!currentUser) return "";
   const displayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
-  return displayName || currentUser.email || "";
+  return formatNameWithEmail(displayName, currentUser.email);
+}
+
+function formatNameWithEmail(displayName, email) {
+  if (displayName && email && displayName !== email) return `${displayName} (${email})`;
+  return displayName || email || "";
 }
 
 async function signedInUI(user) {
@@ -366,6 +372,16 @@ async function getUserDisplayName(userId) {
   if (displayName) return displayName;
   const email = data?.user?.email;
   return email || shortId(userId);
+}
+
+async function getUserNameWithEmail(userId) {
+  if (userNameCache[userId]) return userNameCache[userId];
+  const { data } = await supabase.auth.admin?.getUserById(userId);
+  const email = data?.user?.email || "";
+  const displayName = data?.user?.user_metadata?.display_name || "";
+  const result = formatNameWithEmail(displayName, email) || shortId(userId);
+  userNameCache[userId] = result;
+  return result;
 }
 
 // ---- trips
@@ -1096,8 +1112,7 @@ async function loadPaidByOptions() {
       const displayName = getCurrentDisplayName();
       option.textContent = displayName + " (You)";
     } else {
-      const email = await getUserEmail(member.user_id);
-      option.textContent = email;
+      option.textContent = await getUserNameWithEmail(member.user_id);
     }
     
     expensePaidBy.appendChild(option);
@@ -1157,7 +1172,7 @@ async function loadExpenses() {
 
   // Render expense tiles with display names
   for (const exp of data) {
-    const paidByName = await getUserDisplayName(exp.paid_by);
+    const paidByName = await getUserNameWithEmail(exp.paid_by);
     expensesList.appendChild(renderExpenseTile(exp, paidByName));
   }
 }
@@ -1282,7 +1297,7 @@ async function loadMembers() {
   // Pre-fetch display names for all members
   const memberNames = {};
   for (const m of data) {
-    memberNames[m.user_id] = await getUserDisplayName(m.user_id);
+    memberNames[m.user_id] = await getUserNameWithEmail(m.user_id);
   }
 
   for (const member of data) {
@@ -1676,6 +1691,7 @@ userBtn.addEventListener("click", () => {
     if (error) return setMsg(tripsMsg, error.message, "bad");
     if (data?.user) currentUser = data.user;
     setStoredNickname(currentUser.id, trimmed);
+    userNameCache[currentUser.id] = formatNameWithEmail(trimmed, currentUser.email);
     userBtn.textContent = getCurrentDisplayName();
     loadMembers();
   });
