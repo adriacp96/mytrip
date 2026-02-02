@@ -136,6 +136,7 @@ const expensePaidBy = $("expensePaidBy");
 const expenseSplitAll = $("expenseSplitAll");
 const expenseSplitList = $("expenseSplitList");
 const addExpenseBtn = $("addExpenseBtn");
+const expenseEditId = $("expenseEditId");
 const expensesList = $("expensesList");
 const budgetSummary = $("budgetSummary");
 const expensesMsg = $("expensesMsg");
@@ -1099,31 +1100,61 @@ async function addExpense() {
   const category = (expenseCategory.value || "general").trim();
   const notes = (expenseNotes.value || "").trim() || null;
   const paid_by = expensePaidBy.value || currentUser.id;
+  const editingId = expenseEditId.value;
 
   if (!title) return setMsg(expensesMsg, "Description required.", "warn");
   if (amount <= 0) return setMsg(expensesMsg, "Amount must be greater than 0.", "warn");
 
   addExpenseBtn.disabled = true;
-  setMsg(expensesMsg, "Adding…", "warn");
+  setMsg(expensesMsg, editingId ? "Updating…" : "Adding…", "warn");
 
-  const { data: newExpense, error } = await supabase
-    .from("expenses")
-    .insert({
-    trip_id: currentTrip.id,
-    title,
-    amount,
-    expense_date,
-    category,
-    notes,
-    currency: currentTrip.currency || "AED",
-    paid_by,
-  })
-    .select("id")
-    .single();
+  let expenseId = editingId;
 
-  addExpenseBtn.disabled = false;
+  // If editing, update the existing expense
+  if (editingId) {
+    const { error } = await supabase
+      .from("expenses")
+      .update({
+        title,
+        amount,
+        expense_date,
+        category,
+        notes,
+        paid_by,
+      })
+      .eq("id", editingId);
 
-  if (error) return setMsg(expensesMsg, error.message, "bad");
+    if (error) {
+      addExpenseBtn.disabled = false;
+      return setMsg(expensesMsg, error.message, "bad");
+    }
+
+    // Delete old splits and create new ones
+    await supabase.from("expense_splits").delete().eq("expense_id", editingId);
+  } else {
+    // Create new expense
+    const { data: newExpense, error } = await supabase
+      .from("expenses")
+      .insert({
+        trip_id: currentTrip.id,
+        title,
+        amount,
+        expense_date,
+        category,
+        notes,
+        currency: currentTrip.currency || "AED",
+        paid_by,
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      addExpenseBtn.disabled = false;
+      return setMsg(expensesMsg, error.message, "bad");
+    }
+
+    expenseId = newExpense.id;
+  }
 
   // Split equally among selected members
   let selectedUsers = [];
@@ -1138,25 +1169,34 @@ async function addExpense() {
   }
 
   if (!selectedUsers.length) {
+    addExpenseBtn.disabled = false;
     setMsg(expensesMsg, "Select at least one member to split.", "warn");
     return;
   }
 
   const share = parseFloat((amount / selectedUsers.length).toFixed(2));
   const splits = selectedUsers.map((userId) => ({
-    expense_id: newExpense.id,
+    expense_id: expenseId,
     user_id: userId,
     share_amount: share,
   }));
 
   const { error: splitError } = await supabase.from("expense_splits").insert(splits);
-  if (splitError) return setMsg(expensesMsg, splitError.message, "bad");
+  if (splitError) {
+    addExpenseBtn.disabled = false;
+    return setMsg(expensesMsg, splitError.message, "bad");
+  }
 
+  addExpenseBtn.disabled = false;
+  setMsg(expensesMsg, editingId ? "Updated." : "Added.", "ok");
+  
   expenseTitle.value = "";
   expenseAmount.value = "";
   expenseDate.value = "";
   expenseNotes.value = "";
   expenseCategory.value = "general";
+  expenseEditId.value = "";
+  addExpensePanel.classList.add("hidden");
   expensePaidBy.value = currentUser.id;
 
   setMsg(expensesMsg, "Expense added.", "ok");
@@ -1321,7 +1361,8 @@ function renderExpenseTile(exp, paidByName, myShare, splitUserIds = [], memberMa
   const forText = splitNames.length > 0 ? splitNames.join(", ") : "Unknown";
 
   el.innerHTML = `
-    <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 16px; line-height: 1;">×</button>
+    <button class="btn ghost small" data-action="edit-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 48px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fbbf24;">✎</button>
+    <button class="btn ghost small" data-action="delete-expense" data-expense-id="${esc(exp.id)}" type="button" style="position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fb7185;">×</button>
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
@@ -1349,6 +1390,38 @@ async function deleteExpense(expenseId) {
   setMsg(expensesMsg, "Expense deleted.", "ok");
   await logActivity(currentTrip.id, "deleted_expense", { id: expenseId });
   await loadExpenses();
+}
+
+async function editExpense(expenseId) {
+  if (!currentTrip || !expenseId) return;
+
+  // Fetch the expense details
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("id,title,amount,expense_date,category,paid_by")
+    .eq("id", expenseId)
+    .limit(1);
+
+  if (error || !data?.length) {
+    setMsg(expensesMsg, "Failed to load expense.", "bad");
+    return;
+  }
+
+  const exp = data[0];
+
+  // Populate the expense form with existing values
+  expenseTitle.value = exp.title || "";
+  expenseAmount.value = exp.amount || "";
+  expenseDate.value = exp.expense_date || "";
+  expenseCategory.value = exp.category || "general";
+  expensePaidBy.value = exp.paid_by || currentUser.id;
+
+  // Store expense ID for saving
+  expenseEditId.value = expenseId;
+
+  // Show that we're editing
+  addExpensePanel.classList.remove("hidden");
+  setMsg(expensesMsg, "Editing expense - change details and click Save", "warn");
 }
 
 // ---- members
@@ -1895,6 +1968,8 @@ expensesList.addEventListener("click", (e) => {
   if (!btn) return;
   if (btn.dataset.action === "delete-expense") {
     deleteExpense(btn.dataset.expenseId);
+  } else if (btn.dataset.action === "edit-expense") {
+    editExpense(btn.dataset.expenseId);
   }
 });
 
