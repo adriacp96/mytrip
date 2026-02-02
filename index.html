@@ -56,7 +56,7 @@
             </details>
 
             <div class="hint">
-              Tip: you can share a join link like <code>?join=&lt;tripId&gt;</code>
+              Share join link like <code>?join=&lt;tripId&gt;</code>
             </div>
           </div>
         </section>
@@ -99,10 +99,11 @@
           <div class="cardHeader tripHeader">
             <div class="tripTitleWrap">
               <h2 id="tripHeading">Trip</h2>
-              <p class="muted">Realtime itinerary for everyone in this trip.</p>
+              <p id="tripRange" class="muted">Dates</p>
 
               <div class="row wrap">
                 <div id="tripIdBadge" class="chip"></div>
+                <div id="tripRoleBadge" class="chip"></div>
                 <button id="copyTripIdBtn" class="btn ghost">Copy ID</button>
                 <button id="copyJoinLinkBtn" class="btn ghost">Copy Join Link</button>
               </div>
@@ -112,6 +113,56 @@
           </div>
 
           <div class="stack">
+            <!-- SETTINGS -->
+            <div class="panel">
+              <div class="panelTitle">Trip settings</div>
+
+              <div class="grid2">
+                <div>
+                  <label class="label">Title</label>
+                  <input id="setTitle" class="input" placeholder="Trip title" />
+                </div>
+
+                <div>
+                  <label class="label">Currency</label>
+                  <select id="setCurrency" class="input">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="AED">AED</option>
+                    <option value="JPY">JPY</option>
+                    <option value="CAD">CAD</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CHF">CHF</option>
+                    <option value="SGD">SGD</option>
+                    <option value="HKD">HKD</option>
+                  </select>
+                  <div class="hint">Owner-only (security enforced by Supabase).</div>
+                </div>
+
+                <div>
+                  <label class="label">Start date</label>
+                  <input id="setStart" class="input" type="date" />
+                </div>
+
+                <div>
+                  <label class="label">End date</label>
+                  <input id="setEnd" class="input" type="date" />
+                </div>
+
+                <div class="gridSpan2">
+                  <label class="label">Description</label>
+                  <textarea id="setDescription" class="textarea" rows="4" placeholder="Trip notes, links, ideas…"></textarea>
+                </div>
+              </div>
+
+              <div class="row wrap">
+                <button id="saveTripBtn" class="btn primary">Save settings</button>
+                <div id="tripMsg" class="msg"></div>
+              </div>
+            </div>
+
+            <!-- ITINERARY -->
             <div class="panel">
               <div class="panelTitle">Add itinerary item</div>
 
@@ -166,7 +217,7 @@
               <div class="dialogTitle">Edit item</div>
               <div class="dialogSub muted">Update title, location, notes, date.</div>
             </div>
-            <button id="editCloseBtn" class="btn ghost" value="cancel">Close</button>
+            <button class="btn ghost" value="cancel">Close</button>
           </div>
 
           <div class="stack">
