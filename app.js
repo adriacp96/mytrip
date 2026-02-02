@@ -283,6 +283,12 @@ function getCurrentDisplayName() {
   return formatNameWithEmail(displayName, currentUser.email);
 }
 
+function getHeaderDisplayName() {
+  if (!currentUser) return "";
+  const displayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
+  return displayName || currentUser.email || "";
+}
+
 function formatNameWithEmail(displayName, email) {
   if (displayName && email && displayName !== email) return `${displayName} (${email})`;
   return displayName || email || "";
@@ -299,7 +305,7 @@ async function signedInUI(user) {
   document.querySelector(".topbar").classList.remove("hidden");
   const metaDisplayName = currentUser.user_metadata?.display_name || "";
   if (metaDisplayName) setStoredNickname(currentUser.id, metaDisplayName);
-  userBtn.textContent = getCurrentDisplayName();
+  userBtn.textContent = getHeaderDisplayName();
   userBtn.style.cursor = "pointer";
   userBtn.title = "Click to set display name";
 
@@ -1709,7 +1715,7 @@ userBtn.addEventListener("click", () => {
     if (data?.user) currentUser = data.user;
     setStoredNickname(currentUser.id, trimmed);
     userNameCache[currentUser.id] = formatNameWithEmail(trimmed, currentUser.email);
-    userBtn.textContent = getCurrentDisplayName();
+    userBtn.textContent = getHeaderDisplayName();
     loadMembers();
   });
 });
