@@ -1784,7 +1784,7 @@ userBtn.addEventListener("click", () => {
   });
 });
 
-a2hsClose.addEventListener("click", () => {
+a2hsClose?.addEventListener("click", () => {
   localStorage.setItem("a2hsDismissed", "1");
   a2hsOverlay.classList.add("hidden");
 });
