@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trip Planner</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="topbar">
+        <div>
+          <h1>Trip Planner</h1>
+          <p class="muted">Collaborative trip planning (Supabase sync)</p>
+        </div>
+        <div class="right">
+          <div id="userBadge" class="badge hidden"></div>
+          <button id="logoutBtn" class="btn secondary hidden">Log out</button>
+        </div>
+      </header>
+
+      <main class="grid">
+        <!-- AUTH -->
+        <section id="authCard" class="card">
+          <h2>Sign in</h2>
+          <p class="muted">Magic link to your email.</p>
+
+          <label class="label" for="email">Email</label>
+          <div class="row">
+            <input id="email" class="input" type="email" placeholder="you@example.com" />
+            <button id="loginBtn" class="btn">Send link</button>
+          </div>
+
+          <div id="authMsg" class="msg"></div>
+          <div class="hr"></div>
+
+          <details>
+            <summary>Setup checklist</summary>
+            <ul class="list">
+              <li>Enable Email auth in Supabase</li>
+              <li>Add your GitHub Pages URL to Auth → URL config</li>
+              <li>Paste your Supabase URL + anon key in <code>app.js</code></li>
+            </ul>
+          </details>
+        </section>
+
+        <!-- APP -->
+        <section id="appCard" class="card hidden">
+          <div class="split">
+            <div>
+              <h2>Your trips</h2>
+              <p class="muted">Create a trip and invite friends later (we’ll add sharing next).</p>
+            </div>
+            <div class="row">
+              <input id="tripTitle" class="input" type="text" placeholder="Trip name (e.g. Tokyo 2026)" />
+              <button id="createTripBtn" class="btn">Create</button>
+            </div>
+          </div>
+
+          <div id="tripsList" class="listbox"></div>
+          <div id="tripsMsg" class="msg"></div>
+        </section>
+
+        <!-- TRIP DETAILS -->
+        <section id="tripCard" class="card hidden">
+          <div class="split">
+            <div>
+              <h2 id="tripHeading">Trip</h2>
+              <p id="tripSub" class="muted">Realtime itinerary</p>
+            </div>
+            <button id="closeTripBtn" class="btn secondary">Close</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3>Add item</h3>
+          <div class="formgrid">
+            <div>
+              <label class="label">Date</label>
+              <input id="itemDate" class="input" type="date" />
+            </div>
+            <div>
+              <label class="label">Title</label>
+              <input id="itemTitle" class="input" type="text" placeholder="Senso-ji / Dinner / Museum..." />
+            </div>
+            <div>
+              <label class="label">Location</label>
+              <input id="itemLocation" class="input" type="text" placeholder="Shibuya" />
+            </div>
+            <div>
+              <label class="label">Notes</label>
+              <input id="itemNotes" class="input" type="text" placeholder="Tickets, times, links..." />
+            </div>
+          </div>
+          <div class="row">
+            <button id="addItemBtn" class="btn">Add</button>
+            <div id="itemsMsg" class="msg"></div>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3>Itinerary</h3>
+          <div id="itemsList" class="listbox"></div>
+        </section>
+      </main>
+
+      <footer class="footer muted">
+        Built for GitHub Pages + Supabase.
+      </footer>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
