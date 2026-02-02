@@ -442,6 +442,9 @@ h2 { font-size: 18px; }
   padding-left: calc(20px + env(safe-area-inset-left));
   padding-right: calc(20px + env(safe-area-inset-right));
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  position: fixed;
+  inset: 0;
+  z-index: 1;
 }
 
 .authContent {
