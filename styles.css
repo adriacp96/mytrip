@@ -82,11 +82,11 @@ body {
 }
 
 .a2hsIcon {
-  height: 1em;
+  height: 0.8em;
   width: auto;
   display: inline;
-  margin: 0 2px;
-  vertical-align: middle;
+  margin: 0 1px;
+  vertical-align: text-bottom;
 }
 
 .app {
