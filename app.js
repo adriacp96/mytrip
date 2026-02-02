@@ -678,6 +678,7 @@ function renderItemTile(it) {
       </div>
       <div class="pills" style="margin-top:0;">
         <button class="pill" data-action="edit" type="button">Edit</button>
+        <button class="pill" data-action="delete" type="button">Delete</button>
       </div>
     </div>
     ${it.notes ? `<div class="tileMeta" style="margin-top:10px;">${esc(it.notes)}</div>` : ""}
@@ -743,23 +744,28 @@ async function saveEdit() {
   await loadItems();
 }
 
-async function deleteItem() {
-  const id = editId.value;
+async function deleteItem(itemId) {
+  const id = itemId || editId.value;
   if (!id) return;
 
   const ok = confirm("Delete this item? This cannot be undone.");
   if (!ok) return;
 
-  deleteItemBtn.disabled = true;
-  setMsg(editMsg, "Deleting…", "warn");
+  if (deleteItemBtn) deleteItemBtn.disabled = true;
+  if (itemsMsg) setMsg(itemsMsg, "Deleting…", "warn");
+  if (editMsg) setMsg(editMsg, "Deleting…", "warn");
 
   const { error } = await supabase.from("itinerary_items").delete().eq("id", id);
 
-  deleteItemBtn.disabled = false;
+  if (deleteItemBtn) deleteItemBtn.disabled = false;
 
-  if (error) return setMsg(editMsg, error.message, "bad");
+  if (error) {
+    if (itemsMsg) setMsg(itemsMsg, error.message, "bad");
+    if (editMsg) setMsg(editMsg, error.message, "bad");
+    return;
+  }
 
-  setMsg(editMsg, "Deleted.", "ok");
+  if (editMsg) setMsg(editMsg, "Deleted.", "ok");
   editDialog.close();
   await loadItems();
 }
@@ -1224,6 +1230,7 @@ itemsList.addEventListener("click", (e) => {
   const itemId = tile?.dataset?.itemId;
   if (!itemId) return;
   if (action === "edit") openEditDialog(itemId);
+  if (action === "delete") deleteItem(itemId);
 });
 
 expensesList.addEventListener("click", (e) => {
