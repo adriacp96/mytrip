@@ -67,6 +67,7 @@ body {
   align-items: center;
   gap: 14px;
   margin-bottom: 14px;
+  padding-top: env(safe-area-inset-top);
 }
 
 .brand { display: flex; align-items: center; gap: 12px; }
@@ -426,6 +427,10 @@ h2 { font-size: 18px; }
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-left: calc(20px + env(safe-area-inset-left));
+  padding-right: calc(20px + env(safe-area-inset-right));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
 .authContent {
