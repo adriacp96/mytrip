@@ -227,6 +227,7 @@ function signedOutUI() {
   hide(logoutBtn);
   hide(userBadge);
   hide(bottomBar);
+  document.querySelector(".topbar").classList.add("hidden");
 
   navTrip.disabled = true;
   navTrips.classList.add("navActive");
@@ -248,6 +249,7 @@ async function signedInUI(user) {
   show(appCard);
   show(logoutBtn);
   show(userBadge);
+  document.querySelector(".topbar").classList.remove("hidden");
   show(bottomBar);
 
   userBadge.textContent = user.email || shortId(user.id);
