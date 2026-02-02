@@ -248,7 +248,7 @@ async function signedInUI(user) {
   show(logoutBtn);
   show(userBtn);
   document.querySelector(".topbar").classList.remove("hidden");
-  userBtn.title = user.email;
+  userBtn.textContent = user.email;
 
   await handleDeepLinks();
   await loadTrips();
@@ -1131,9 +1131,6 @@ function cleanupRealtime() {
 // ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
-userBtn.addEventListener("click", () => {
-  alert(`Logged in as: ${currentUser.email}`);
-});
 a2hsClose.addEventListener("click", () => {
   localStorage.setItem("a2hsDismissed", "1");
   a2hsOverlay.classList.add("hidden");
