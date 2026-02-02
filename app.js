@@ -123,6 +123,7 @@ const itemTitle = $("itemTitle");
 const itemLocation = $("itemLocation");
 const itemNotes = $("itemNotes");
 const itemCategory = $("itemCategory");
+const itemEditId = $("itemEditId");
 const addItemBtn = $("addItemBtn");
 const itemsList = $("itemsList");
 
@@ -1016,17 +1017,7 @@ async function moveItemDown(itemId) {
     .update({ order_seq: tempSeq })
     .eq("id", nextItem.id);
 
-  const it = data?.[0];
-  if (!it) return;
-
-  editId.value = it.id;
-  editDate.value = it.day_date || "";
-  editTitle.value = it.title || "";
-  editLocation.value = it.location || "";
-  editNotes.value = it.notes || "";
-  editCategory.value = it.category || "activity";
-
-  editDialog.showModal();
+  await loadItems();
 }
 
 async function saveEdit() {
@@ -1065,28 +1056,29 @@ async function saveEdit() {
 }
 
 async function deleteItem(itemId) {
-  const id = itemId || editId.value;
+  const id = itemId || itemEditId.value;
   if (!id) return;
 
   const ok = confirm("Delete this item? This cannot be undone.");
   if (!ok) return;
 
-  if (deleteItemBtn) deleteItemBtn.disabled = true;
   if (itemsMsg) setMsg(itemsMsg, "Deleting…", "warn");
-  if (editMsg) setMsg(editMsg, "Deleting…", "warn");
 
   const { error } = await supabase.from("itinerary_items").delete().eq("id", id);
 
-  if (deleteItemBtn) deleteItemBtn.disabled = false;
-
   if (error) {
     if (itemsMsg) setMsg(itemsMsg, error.message, "bad");
-    if (editMsg) setMsg(editMsg, error.message, "bad");
     return;
   }
 
-  if (editMsg) setMsg(editMsg, "Deleted.", "ok");
-  editDialog.close();
+  setMsg(itemsMsg, "Deleted.", "ok");
+  itemEditId.value = "";
+  addItemPanel.classList.add("hidden");
+  
+  // Reset panel title
+  const panelTitle = addItemPanel.querySelector(".panelTitle");
+  panelTitle.textContent = "Add itinerary item";
+  
   await loadItems();
 }
 
