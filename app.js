@@ -1188,6 +1188,7 @@ async function addExpense() {
   }
 
   addExpenseBtn.disabled = false;
+  addExpenseBtn.textContent = "Add expense";
   setMsg(expensesMsg, editingId ? "Updated." : "Added.", "ok");
   
   expenseTitle.value = "";
@@ -1420,6 +1421,7 @@ async function editExpense(expenseId) {
   expenseEditId.value = expenseId;
 
   // Show that we're editing
+  addExpenseBtn.textContent = "Save";
   addExpensePanel.classList.remove("hidden");
   setMsg(expensesMsg, "Editing expense - change details and click Save", "warn");
 }
