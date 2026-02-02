@@ -29,6 +29,7 @@
       <header class="topbar">
         <div class="topRight">
           <span id="userBtn" class="userEmail hidden"></span>
+          <button id="refreshBtn" class="btn ghost hidden">🔄</button>
           <button id="logoutBtn" class="btn ghost hidden">Log out</button>
         </div>
       </header>
@@ -79,19 +80,24 @@
           </div>
 
           <div class="stack">
-            <div class="panel">
-              <div class="panelTitle">Create</div>
+            <div class="row wrap">
+              <button id="toggleCreateBtn" class="btn soft">+ Create Trip</button>
+              <button id="toggleJoinBtn" class="btn soft">+ Join Trip</button>
+            </div>
+
+            <div id="createPanel" class="panel hidden">
+              <div class="panelTitle">Create New Trip</div>
               <div class="row">
                 <input id="tripTitle" class="input" placeholder="Trip name (e.g. Japan 2026)" />
                 <button id="createTripBtn" class="btn primary">Create</button>
               </div>
             </div>
 
-            <div class="panel">
-              <div class="panelTitle">Join</div>
+            <div id="joinPanel" class="panel hidden">
+              <div class="panelTitle">Join Existing Trip</div>
               <div class="row">
                 <input id="joinTripId" class="input" placeholder="Trip ID (uuid)" />
-                <button id="joinTripBtn" class="btn soft">Join</button>
+                <button id="joinTripBtn" class="btn primary">Join</button>
               </div>
               <div class="hint">Ask a friend to share the Trip ID or a join link.</div>
             </div>

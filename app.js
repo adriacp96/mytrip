@@ -75,9 +75,13 @@ const tripMsg = $("tripMsg");
 const tripsList = $("tripsList");
 const tripTitle = $("tripTitle");
 const createTripBtn = $("createTripBtn");
+const toggleCreateBtn = $("toggleCreateBtn");
+const createPanel = $("createPanel");
 
 const joinTripId = $("joinTripId");
 const joinTripBtn = $("joinTripBtn");
+const toggleJoinBtn = $("toggleJoinBtn");
+const joinPanel = $("joinPanel");
 
 const tripHeading = $("tripHeading");
 const tripRange = $("tripRange");
@@ -227,6 +231,7 @@ function signedOutUI() {
   hide(appCard);
   hide(tripCard);
   hide(logoutBtn);
+  hide(refreshBtn);
   hide(userBtn);
   
   document.querySelector(".topbar").classList.add("hidden");
@@ -246,6 +251,7 @@ async function signedInUI(user) {
   hide(authCard);
   show(appCard);
   show(logoutBtn);
+  show(refreshBtn);
   show(userBtn);
   document.querySelector(".topbar").classList.remove("hidden");
   userBtn.textContent = user.email;
@@ -1131,6 +1137,20 @@ function cleanupRealtime() {
 // ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
+refreshBtn.addEventListener("click", () => {
+  window.location.reload();
+});
+
+toggleCreateBtn.addEventListener("click", () => {
+  createPanel.classList.toggle("hidden");
+  joinPanel.classList.add("hidden");
+});
+
+toggleJoinBtn.addEventListener("click", () => {
+  joinPanel.classList.toggle("hidden");
+  createPanel.classList.add("hidden");
+});
+
 a2hsClose.addEventListener("click", () => {
   localStorage.setItem("a2hsDismissed", "1");
   a2hsOverlay.classList.add("hidden");
