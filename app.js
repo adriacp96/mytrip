@@ -1265,7 +1265,7 @@ function renderBudgetSummary(expenses, currency, myShareMap = {}) {
   }, 0);
 
   let html = `<div class="budgetGrid">`;
-  html += `<div class="budgetCard"><div class="budgetLabel">Total spent</div><div class="budgetAmount">${fmtCurrency(total, currency)}</div></div>`;
+  html += `<div class="budgetCard"><div class="budgetLabel">Trip budget</div><div class="budgetAmount">${fmtCurrency(total, currency)}</div></div>`;
   html += `<div class="budgetCard"><div class="budgetLabel">Spent by me</div><div class="budgetAmount">${fmtCurrency(myTotal, currency)}</div></div>`;
   html += `</div>`;
   return html;
