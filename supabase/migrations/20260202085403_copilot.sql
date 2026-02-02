@@ -110,11 +110,13 @@ CREATE POLICY "trips_delete" ON trips FOR DELETE USING (owner_id = auth.uid());
 
 -- RLS Policies for trip_members
 CREATE POLICY "trip_members_select" ON trip_members FOR SELECT USING (
-  user_id = auth.uid() OR trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
+  user_id = auth.uid()
 );
-CREATE POLICY "trip_members_insert" ON trip_members FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "trip_members_insert" ON trip_members FOR INSERT WITH CHECK (
+  user_id = auth.uid()
+);
 CREATE POLICY "trip_members_delete" ON trip_members FOR DELETE USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid() AND role = 'owner')
+  user_id = auth.uid()
 );
 
 -- RLS Policies for itinerary_items
