@@ -103,8 +103,8 @@ body {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
-  padding-top: 8px;
+  margin-bottom: 4px;
+  padding-top: env(safe-area-inset-top);
 }
 
 .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -154,10 +154,10 @@ body {
   #userBtn, #logoutBtn { padding: 4px 8px; font-size: 12px; }
 }
 
-.layout { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 0 8px; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 24px; margin: 0 12px; }
 @media (min-width: 900px) {
-  .layout { grid-template-columns: 1fr 1fr; gap: 16px; margin: 0 12px; max-width: calc(1100px - 24px); }
-  #tripCard { grid-column: span 2; margin-top: 8px; }
+  .layout { grid-template-columns: 1fr 1fr; gap: 24px; margin: 0 12px; max-width: calc(1100px - 24px); }
+  #tripCard { grid-column: span 2; margin-top: 16px; }
 }
 
 .card {
