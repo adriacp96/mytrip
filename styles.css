@@ -127,6 +127,14 @@ body {
   .topRight { margin-top: 0; }
 }
 
+@media (max-width: 360px) {
+  .logo { width: 34px; height: 34px; border-radius: 10px; }
+  .brand { gap: 8px; }
+  .brandName { font-size: 13px; letter-spacing: 0; }
+  .topRight { gap: 6px; }
+  #userBtn, #logoutBtn { padding: 4px 8px; font-size: 12px; }
+}
+
 .layout { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 0 32px; }
 @media (min-width: 900px) {
   .layout { grid-template-columns: 1fr 1fr; margin: 0 32px; max-width: calc(1100px - 64px); }
@@ -168,6 +176,10 @@ body {
   z-index: 2;
 }
 .tripHeader { align-items: center; }
+
+#appCard.minimized .stack {
+  display: none;
+}
 
 h1, h2 { margin: 0; }
 h1 { font-size: 20px; }

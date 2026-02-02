@@ -452,6 +452,7 @@ async function openTripById(tripId) {
   else setMsg(tripMsg, "", "");
 
   show(tripCard);
+  appCard.classList.add("minimized");
   // switch to itinerary tab by default
   switchTab("itinerary");
 
@@ -468,6 +469,7 @@ function closeTrip() {
   currentRole = null;
   cleanupRealtime();
   hide(tripCard);
+  appCard.classList.remove("minimized");
   itemsList.innerHTML = "";
   setMsg(itemsMsg, "", "");
   setMsg(tripMsg, "", "");
