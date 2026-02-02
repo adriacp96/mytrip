@@ -54,7 +54,7 @@ const tripCard = $("tripCard");
 
 const loginBtn = $("loginBtn");
 const logoutBtn = $("logoutBtn");
-const userBadge = $("userBadge");
+const userBtn = $("userBtn");
 
 const authMsg = $("authMsg");
 const tripsMsg = $("tripsMsg");
@@ -206,7 +206,7 @@ function signedOutUI() {
   hide(appCard);
   hide(tripCard);
   hide(logoutBtn);
-  hide(userBadge);
+  hide(userBtn);
   hide(bottomBar);
   document.querySelector(".topbar").classList.add("hidden");
 
@@ -229,11 +229,11 @@ async function signedInUI(user) {
   hide(authCard);
   show(appCard);
   show(logoutBtn);
-  show(userBadge);
+  show(userBtn);
   document.querySelector(".topbar").classList.remove("hidden");
   show(bottomBar);
 
-  userBadge.textContent = user.email || shortId(user.id);
+  userBtn.title = user.email;
 
   await handleDeepLinks();
   await loadTrips();
@@ -1139,6 +1139,9 @@ function goTripView() {
 // ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
+userBtn.addEventListener("click", () => {
+  alert(`Logged in as: ${currentUser.email}`);
+});
 
 // Toggle between sign in and sign up
 $("toggleAuthMode").addEventListener("click", () => {
