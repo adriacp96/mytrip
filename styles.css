@@ -362,14 +362,16 @@ h2 { font-size: 16px; }
 /* TAB NAVIGATION */
 .tabNav {
   display: flex;
-  gap: 8px;
+  gap: 0;
   overflow-x: auto;
-  padding: 0 12px;
-  margin: 0 -12px;
+  padding: 0;
+  margin: 0;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .tabBtn {
+  flex: 1;
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.03);
   color: var(--text);

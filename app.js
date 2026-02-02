@@ -357,18 +357,19 @@ async function loadTrips() {
 }
 
 function getCountdown(startDate) {
-  if (!startDate) return "No date";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  if (!startDate) return "--:--:--:--";
+  const now = new Date();
   const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-  const diffTime = start - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = start - now;
   
-  if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Tomorrow";
-  return `${diffDays} days`;
+  if (diffTime <= 0) return "00:00:00:00";
+  
+  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
+  
+  return `${String(days).padStart(2, "0")}:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function renderTripTile(t) {
