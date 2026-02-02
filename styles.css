@@ -557,13 +557,17 @@ h2 { font-size: 18px; }
   flex-direction: column;
   gap: 8px;
   border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(17,24,42,0.85);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 20px 70px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 
+    0 8px 32px rgba(31, 38, 135, 0.2),
+    inset 0 2px 8px rgba(255, 255, 255, 0.2);
   max-width: 1100px;
   margin: 0 auto;
   z-index: 999;
+  overflow: hidden;
+  position: relative;
 }
 @media (min-width: 900px) { .bottomBar { display: none !important; } }
 
@@ -572,6 +576,8 @@ h2 { font-size: 18px; }
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   padding: 10px;
+  position: relative;
+  z-index: 2;
 }
 
 .bottomBarTabs {
@@ -579,7 +585,9 @@ h2 { font-size: 18px; }
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   padding: 8px 10px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 .bottomBarTabs.hidden {
