@@ -367,7 +367,7 @@ async function fetchMyRole(tripId) {
 async function getUserEmail(userId) {
   if (userCache[userId]) return userCache[userId];
   const { data } = await supabase.auth.admin?.getUserById(userId);
-  const email = data?.user?.email || "Unknown member";
+  const email = data?.user?.email || "";
   userCache[userId] = email;
   return email;
 }
@@ -377,7 +377,7 @@ async function getUserDisplayName(userId) {
   const displayName = data?.user?.user_metadata?.display_name;
   if (displayName) return displayName;
   const email = data?.user?.email;
-  return email || "Unknown member";
+  return email || "";
 }
 
 async function getUserNameWithEmail(userId) {
@@ -385,7 +385,7 @@ async function getUserNameWithEmail(userId) {
   const { data } = await supabase.auth.admin?.getUserById(userId);
   const email = data?.user?.email || "";
   const displayName = data?.user?.user_metadata?.display_name || "";
-  const result = formatNameWithEmail(displayName, email) || "Unknown member";
+  const result = formatNameWithEmail(displayName, email) || email || "";
   userNameCache[userId] = result;
   return result;
 }
@@ -1226,7 +1226,7 @@ function renderExpenseTile(exp, paidByName, myShare) {
     <div class="tileTop">
       <div>
         <div class="tileTitle">${icon} ${esc(exp.title)}</div>
-        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || "Unknown member")} for ${shareText}</div>
+        <div class="tileMeta">${exp.expense_date || "No date"} · Paid by ${esc(paidByName || "")} for ${shareText}</div>
       </div>
       <div class="expenseAmount">${amount}</div>
     </div>
@@ -1346,7 +1346,7 @@ function renderMemberTile(member, email, balanceInfo = { total: 0, details: {} }
     
     if (entries.length > 0) {
       const [otherUserId, amount] = entries[0];
-      const otherName = memberNames[otherUserId] || "Unknown member";
+      const otherName = memberNames[otherUserId] || "";
       
       if (amount > 0) {
         el.classList.add("owed");
