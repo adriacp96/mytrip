@@ -52,7 +52,7 @@ body {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
+  background: #000000;
   z-index: 2000;
 }
 
@@ -60,25 +60,27 @@ body {
 
 .a2hsCard {
   width: min(360px, 100%);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
-  padding: 18px;
+  padding: 24px;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   color: #000;
   display: grid;
   gap: 12px;
-  text-align: left;
+  text-align: center;
 }
 
 .a2hsTitle {
   font-weight: 700;
   font-size: 16px;
+  text-align: center;
 }
 
 .a2hsText {
   font-size: 14px;
   color: rgba(0, 0, 0, 0.8);
+  text-align: center;
 }
 
 .a2hsIcon {
@@ -86,7 +88,7 @@ body {
   width: auto;
   display: inline;
   margin: 0 1px;
-  vertical-align: text-bottom;
+  vertical-align: middle;
 }
 
 .app {
