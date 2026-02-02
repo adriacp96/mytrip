@@ -463,7 +463,7 @@ function renderTripTile(t) {
       <div>
         <div class="tileTitle">${esc(t.title)}</div>
         <div class="tileMeta">${esc(fmtRange(t.start_date, t.end_date))}</div>
-        <div class="tileMeta">Trip ID: ${esc(shortId(t.id))}</div>
+        <div class="tileMeta">Trip ID: ${esc(t.id)}</div>
       </div>
     </div>
     <div class="pills">
