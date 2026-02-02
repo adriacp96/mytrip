@@ -132,7 +132,7 @@ const activityLog = $("activityLog");
 const bottomBar = $("bottomBar");
 const navTrips = $("navTrips");
 const navTrip = $("navTrip");
-const bottomBarMenu = $("bottomBarMenu");
+const bottomBarTabs = $("bottomBarTabs");
 
 // dialog
 const editDialog = $("editDialog");
@@ -1101,7 +1101,7 @@ function cleanupRealtime() {
 // ---- mobile nav
 function goTripsView() {
   hide(tripCard);
-  hide(bottomBarMenu);
+  hide(bottomBarTabs);
   navTrip.disabled = !currentTrip;
   navTrips.classList.add("navActive");
   navTrip.classList.remove("navActive");
@@ -1110,7 +1110,7 @@ function goTripsView() {
 function goTripView() {
   if (!currentTrip) return;
   show(tripCard);
-  show(bottomBarMenu);
+  show(bottomBarTabs);
   navTrips.classList.remove("navActive");
   navTrip.classList.add("navActive");
 }
