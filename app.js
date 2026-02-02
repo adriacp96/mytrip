@@ -1488,14 +1488,20 @@ togglePackingBtn.addEventListener("click", () => {
 
 nicknameBtn.addEventListener("click", () => {
   if (!currentUser) return;
-  const currentNick = getStoredNickname(currentUser.id);
+  const currentNick = currentUser.user_metadata?.nickname || getStoredNickname(currentUser.id);
   const next = prompt("Set your nickname", currentNick || "");
   if (next === null) return;
   const trimmed = next.trim();
-  setStoredNickname(currentUser.id, trimmed);
-  userBtn.textContent = getCurrentDisplayName();
-  nicknameBtn.textContent = trimmed ? trimmed : "Set nickname";
-  loadMembers();
+  supabase.auth.updateUser({
+    data: { nickname: trimmed || null },
+  }).then(({ data, error }) => {
+    if (error) return setMsg(tripsMsg, error.message, "bad");
+    if (data?.user) currentUser = data.user;
+    setStoredNickname(currentUser.id, trimmed);
+    userBtn.textContent = getCurrentDisplayName();
+    nicknameBtn.textContent = trimmed ? trimmed : "Set nickname";
+    loadMembers();
+  });
 });
 
 a2hsClose.addEventListener("click", () => {
