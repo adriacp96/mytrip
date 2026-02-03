@@ -609,6 +609,14 @@ async function openTripById(tripId) {
   if (!isOwner) setMsg(tripMsg, "Only the owner can edit trip settings.", "warn");
   else setMsg(tripMsg, "", "");
 
+  // Move tripHeader to appCard header when minimizing
+  const tripHeader = document.querySelector('.tripHeader');
+  const appCardHeader = document.getElementById('appCardHeader');
+  if (tripHeader && appCardHeader) {
+    appCardHeader.innerHTML = '';
+    appCardHeader.appendChild(tripHeader);
+  }
+
   show(tripCard);
   appCard.classList.add("minimized");
   // switch to itinerary tab by default
@@ -627,12 +635,27 @@ function closeTrip() {
   currentTrip = null;
   currentRole = null;
   cleanupRealtime();
+
+  // Move tripHeader back to tripCard
+  const tripHeader = document.querySelector('.tripHeader');
+  const appCardHeader = document.getElementById('appCardHeader');
+  if (tripHeader && appCardHeader) {
+    // Restore default appCard header
+    appCardHeader.innerHTML = `
+      <div>
+        <h2>Your trips</h2>
+        <p class="muted">Create a trip or join with a Trip ID.</p>
+      </div>
+    `;
+    // Move tripHeader back to the top of tripCard
+    tripCard.insertBefore(tripHeader, tripCard.firstChild);
+  }
+
   hide(tripCard);
   appCard.classList.remove("minimized");
   itemsList.innerHTML = "";
   setMsg(itemsMsg, "", "");
   setMsg(tripMsg, "", "");
-
 }
 
 // ---- tab navigation

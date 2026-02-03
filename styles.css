@@ -216,6 +216,10 @@ body {
   margin-bottom: 15px;
 }
 
+#appCard.minimized .cardHeader {
+  display: block;
+}
+
 h1, h2 { margin: 0; }
 h1 { font-size: 18px; }
 h2 { font-size: 16px; }
