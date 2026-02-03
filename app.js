@@ -892,7 +892,7 @@ async function loadItems() {
 
 function renderItemTile(it, index, total) {
   const el = document.createElement("div");
-  el.className = "tile";
+  el.className = "tile swipeable";
   el.dataset.itemId = it.id;
   el.draggable = true;
   el.style.position = "relative";
@@ -2064,6 +2064,42 @@ expensesList.addEventListener("touchend", async () => {
 
   if (translateX <= -80 && expenseId) {
     await deleteExpense(expenseId);
+  }
+});
+
+// Swipe to delete for itinerary items
+let swipeStartXItem = 0;
+let swipeActiveTileItem = null;
+
+itemsList.addEventListener("touchstart", (e) => {
+  const tile = e.target.closest(".tile.swipeable");
+  if (!tile) return;
+  swipeActiveTileItem = tile;
+  swipeStartXItem = e.touches[0].clientX;
+  tile.classList.remove("swipeHint");
+}, { passive: true });
+
+itemsList.addEventListener("touchmove", (e) => {
+  if (!swipeActiveTileItem) return;
+  const currentX = e.touches[0].clientX;
+  const deltaX = Math.min(0, currentX - swipeStartXItem);
+  swipeActiveTileItem.style.transform = `translateX(${deltaX}px)`;
+  if (deltaX < -80) swipeActiveTileItem.classList.add("swipeHint");
+  else swipeActiveTileItem.classList.remove("swipeHint");
+}, { passive: true });
+
+itemsList.addEventListener("touchend", async () => {
+  if (!swipeActiveTileItem) return;
+  const computed = getComputedStyle(swipeActiveTileItem);
+  const matrix = new DOMMatrixReadOnly(computed.transform);
+  const translateX = matrix.m41 || 0;
+  const itemId = swipeActiveTileItem.dataset.itemId;
+  swipeActiveTileItem.style.transform = "";
+  swipeActiveTileItem.classList.remove("swipeHint");
+  swipeActiveTileItem = null;
+
+  if (translateX <= -80 && itemId) {
+    await deleteItem(itemId);
   }
 });
 
