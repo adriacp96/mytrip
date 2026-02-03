@@ -9,43 +9,125 @@ A real-time, collaborative trip planning application built with Supabase and van
 - Share trip links with friends via deep linking
 - Edit trip details (title, dates, currency, description)
 - Real-time sync across all connected devices
+- Move trip header to minimized app card for better mobile UX
 
 📋 **Itinerary Planning**
-- Add, edit, and delete activities
+- Add, edit, and delete activities with modal panels
 - Categorize items (activity, accommodation, transport, food, etc.)
 - Add dates, locations, and notes
-- Sort by date automatically
+- Drag-and-drop reordering or use arrow buttons to move items
+- Swipe left to delete items (mobile-friendly)
 - Visual category icons
+- Edit mode to update existing items
 
 💰 **Expense Tracking**
 - Log expenses with amounts and categories
-- Track who paid for what
-- Budget summary by category
+- Choose who paid for what
+- Automatically split expenses equally or select specific members
+- Budget summary by category and total trip budget
 - Multi-currency support
 - Real-time expense updates
+- Shows "Paid by X for Y, Z" with split member names
+- Visual indicators: Green (money owed to you), Red (you owe money)
+- Edit mode to update existing expenses
+- Swipe left to delete expenses
 
 👥 **Member Management**
 - Invite friends with trip join links
 - Manage member roles (owner, editor, viewer)
 - Remove members from trips
-- See who's in your trip
+- See each member's balance at a glance
+- Display names with nickname priority (nickname → email)
+- Calculate who owes what with detailed per-member balances
 
 🧳 **Packing Lists**
 - Create multiple packing lists
 - Add items to check off
 - Track progress with visual progress bar
 - Collaborative checklists
+- Assign items to specific people
 
 📝 **Activity Log**
 - See all changes made to the trip
 - Track who did what and when
 - Understand trip history
+- Log includes: trip creation, updates, item additions, expense tracking, member joins
 
 ⚙️ **Settings**
 - Customize trip details
 - Change currency
 - Add trip description and notes
 - Owner-only changes (protected by Supabase RLS)
+- Set your display name (visible to all trip members)
+
+## Core Functions
+
+### Authentication & User Management
+- `sendMagicLink()` - Sign in with email/password
+- `signedInUI()` - Initialize UI for authenticated users with display name prompt
+- `signedOutUI()` - Clean up UI for logged-out users
+- `getHeaderDisplayName()` - Get user's display name for header
+- `getStoredNickname()` / `setStoredNickname()` - Manage local nickname cache
+- `getUserDisplayName()` - Fetch user's display name (nickname priority)
+- `getUserNameWithEmail()` - Get display name or email
+- `getUserEmail()` - Fetch user's email from Supabase
+
+### Trip Management
+- `loadTrips()` - Load all trips user is part of
+- `createTrip()` - Create new trip with user as owner
+- `openTripById()` - Open trip and show trip header in minimized appCard
+- `closeTrip()` - Close trip and restore trip header to tripCard
+- `fetchTrip()` - Get trip details by ID
+- `fetchMyRole()` - Get current user's role in a trip
+- `saveTrip Settings()` - Update trip details (owner only)
+- `deleteTrip()` - Delete trip (owner only)
+
+### Itinerary Functions
+- `addItem()` - Add or save itinerary item (create/edit mode)
+- `enterItemCreateMode()` - Reset form to create new item
+- `enterItemEditMode()` - Load item data for editing
+- `loadItems()` - Load all items for current trip
+- `deleteItem()` - Delete itinerary item with confirmation
+- `moveItemUp()` / `moveItemDown()` - Reorder items
+- `renderItemTile()` - Create item UI with edit/swipe features
+- Swipe-to-delete functionality for items
+
+### Expense Functions
+- `addExpense()` - Add or save expense (create/edit mode)
+- `enterExpenseCreateMode()` - Reset form to create new expense
+- `enterExpenseEditMode()` - Load expense data and splits for editing
+- `loadExpenses()` - Load all expenses with splits and member names
+- `deleteExpense()` - Delete expense with confirmation
+- `loadPaidByOptions()` - Populate paid-by dropdown with trip members
+- `renderExpenseTile()` - Create expense UI with split info and edit/swipe features
+- `calculateMemberBalances()` - Calculate who owes whom with details
+- `renderBudgetSummary()` - Display total and personal expense summaries
+- Swipe-to-delete functionality for expenses
+- Expense split tracking with equal distribution
+
+### Member Functions
+- `loadMembers()` - Load trip members with balance information
+- `renderMemberTile()` - Create member UI with balance indicators
+- Color coding: Green for money owed, Red for owing money
+
+### Packing Functions
+- `createPackingList()` - Create new packing list
+- `loadPackingLists()` - Load all packing lists for trip
+- `renderPackingList()` - Create packing list UI
+
+### Activity Log
+- `loadActivityLog()` - Load activity log for current trip
+- `logActivity()` - Log actions (trip changes, expenses, items, members)
+
+### UI Utilities
+- `switchTab()` - Navigate between tabs (itinerary, expenses, members, packing, settings)
+- `setMsg()` / `show()` / `hide()` - DOM manipulation helpers
+- `esc()` - HTML escape for security
+- `fmtCurrency()` / `fmtRange()` - Format display values
+- `getCategoryIcon()` - Get emoji for category type
+- `handleDeepLinks()` - Process ?join and ?trip URL parameters
+- `copyTripId()` / `copyJoinLink()` - Copy share information
+- `setupRealtime()` / `cleanupRealtime()` - Manage Supabase realtime subscriptions
 
 ## Tech Stack
 
@@ -54,344 +136,17 @@ A real-time, collaborative trip planning application built with Supabase and van
 - **Realtime**: Supabase Realtime for live updates
 - **Database**: PostgreSQL with Row Level Security (RLS)
 - **Deployment**: GitHub Pages (static hosting)
+- **PWA Features**: Installable on mobile home screen
 
-## Database Schema
+## UI Features
 
-### Tables
-
-**trips**
-```sql
-id (UUID, PK)
-owner_id (UUID, FK to auth.users)
-title (TEXT)
-currency (TEXT, default: USD)
-start_date (DATE)
-end_date (DATE)
-description (TEXT)
-created_at (TIMESTAMP)
-updated_at (TIMESTAMP)
-```
-
-**trip_members**
-```sql
-id (UUID, PK)
-trip_id (UUID, FK to trips)
-user_id (UUID, FK to auth.users)
-role (TEXT: owner, editor, viewer)
-joined_at (TIMESTAMP)
-UNIQUE(trip_id, user_id)
-```
-
-**itinerary_items**
-```sql
-id (UUID, PK)
-trip_id (UUID, FK to trips)
-day_date (DATE)
-title (TEXT)
-location (TEXT)
-notes (TEXT)
-category (TEXT: activity, accommodation, transport, food, other)
-updated_by (UUID, FK to auth.users)
-updated_at (TIMESTAMP)
-created_at (TIMESTAMP)
-```
-
-**expenses**
-```sql
-id (UUID, PK)
-trip_id (UUID, FK to trips)
-title (TEXT)
-amount (DECIMAL)
-currency (TEXT)
-category (TEXT: accommodation, food, transport, activity, general)
-paid_by (UUID, FK to auth.users)
-expense_date (DATE)
-notes (TEXT)
-created_at (TIMESTAMP)
-updated_at (TIMESTAMP)
-```
-
-**expense_splits** (for future settlement tracking)
-```sql
-id (UUID, PK)
-expense_id (UUID, FK to expenses)
-user_id (UUID, FK to auth.users)
-share_amount (DECIMAL)
-settled (BOOLEAN, default: false)
-UNIQUE(expense_id, user_id)
-```
-
-**packing_lists**
-```sql
-id (UUID, PK)
-trip_id (UUID, FK to trips)
-created_by (UUID, FK to auth.users)
-title (TEXT)
-created_at (TIMESTAMP)
-```
-
-**packing_items**
-```sql
-id (UUID, PK)
-list_id (UUID, FK to packing_lists)
-item (TEXT)
-packed (BOOLEAN, default: false)
-assigned_to (UUID, FK to auth.users, nullable)
-created_at (TIMESTAMP)
-```
-
-**activity_log**
-```sql
-id (UUID, PK)
-trip_id (UUID, FK to trips)
-user_id (UUID, FK to auth.users)
-action (TEXT: created_trip, updated_trip, added_item, added_expense, joined_trip, etc.)
-details (JSONB)
-created_at (TIMESTAMP)
-```
-
-## Setup Instructions
-
-### 1. Supabase Setup
-
-1. Create a Supabase project at https://supabase.com
-2. In the SQL Editor, copy and paste the SQL schema from the section below
-3. Create all tables listed above
-4. Enable Row Level Security (RLS) on all tables
-5. Create RLS policies for data access control (detailed below)
-6. Enable Email authentication provider
-7. Set your project URL as the Site URL and Redirect URL
-
-### 2. Configure the App
-
-1. Copy your Supabase URL and Anon Key
-2. Update `app.js` with your credentials:
-```javascript
-const SUPABASE_URL = "your-project-url";
-const SUPABASE_ANON_KEY = "your-anon-key";
-```
-
-### 3. Deploy
-
-Push to GitHub and enable GitHub Pages on your repository.
-
-## SQL Setup Script
-
-Run this SQL in your Supabase SQL Editor:
-
-```sql
--- Create tables
-CREATE TABLE trips (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id UUID NOT NULL REFERENCES auth.users(id),
-  title TEXT NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  start_date DATE,
-  end_date DATE,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE trip_members (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id),
-  role TEXT DEFAULT 'editor',
-  joined_at TIMESTAMP DEFAULT now(),
-  UNIQUE(trip_id, user_id)
-);
-
-CREATE TABLE itinerary_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  day_date DATE,
-  title TEXT NOT NULL,
-  location TEXT,
-  notes TEXT,
-  category TEXT DEFAULT 'activity',
-  updated_by UUID NOT NULL REFERENCES auth.users(id),
-  updated_at TIMESTAMP DEFAULT now(),
-  created_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  amount DECIMAL(10, 2) NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  category TEXT DEFAULT 'general',
-  paid_by UUID NOT NULL REFERENCES auth.users(id),
-  expense_date DATE,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE expense_splits (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  expense_id UUID NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id),
-  share_amount DECIMAL(10, 2) NOT NULL,
-  settled BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT now(),
-  UNIQUE(expense_id, user_id)
-);
-
-CREATE TABLE packing_lists (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  title TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE packing_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  list_id UUID NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE,
-  item TEXT NOT NULL,
-  packed BOOLEAN DEFAULT false,
-  assigned_to UUID REFERENCES auth.users(id),
-  created_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE activity_log (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id),
-  action TEXT NOT NULL,
-  details JSONB,
-  created_at TIMESTAMP DEFAULT now()
-);
-
--- Enable RLS
-ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
-ALTER TABLE trip_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE itinerary_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expense_splits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE packing_lists ENABLE ROW LEVEL SECURITY;
-ALTER TABLE packing_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies for trips
-CREATE POLICY "trips_select" ON trips FOR SELECT USING (
-  owner_id = auth.uid() OR id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "trips_insert" ON trips FOR INSERT WITH CHECK (owner_id = auth.uid());
-CREATE POLICY "trips_update" ON trips FOR UPDATE USING (owner_id = auth.uid()) WITH CHECK (owner_id = auth.uid());
-CREATE POLICY "trips_delete" ON trips FOR DELETE USING (owner_id = auth.uid());
-
--- RLS Policies for trip_members
-CREATE POLICY "trip_members_select" ON trip_members FOR SELECT USING (
-  user_id = auth.uid() OR trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "trip_members_insert" ON trip_members FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "trip_members_delete" ON trip_members FOR DELETE USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid() AND role = 'owner')
-);
-
--- RLS Policies for itinerary_items
-CREATE POLICY "itinerary_select" ON itinerary_items FOR SELECT USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "itinerary_insert" ON itinerary_items FOR INSERT WITH CHECK (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "itinerary_update" ON itinerary_items FOR UPDATE USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "itinerary_delete" ON itinerary_items FOR DELETE USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-
--- RLS Policies for expenses
-CREATE POLICY "expenses_select" ON expenses FOR SELECT USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "expenses_insert" ON expenses FOR INSERT WITH CHECK (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "expenses_update" ON expenses FOR UPDATE USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "expenses_delete" ON expenses FOR DELETE USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-
--- RLS Policies for expense_splits
-CREATE POLICY "expense_splits_select" ON expense_splits FOR SELECT USING (
-  expense_id IN (
-    SELECT id FROM expenses WHERE trip_id IN (
-      SELECT trip_id FROM trip_members WHERE user_id = auth.uid()
-    )
-  )
-);
-CREATE POLICY "expense_splits_insert" ON expense_splits FOR INSERT WITH CHECK (
-  expense_id IN (
-    SELECT id FROM expenses WHERE trip_id IN (
-      SELECT trip_id FROM trip_members WHERE user_id = auth.uid()
-    )
-  )
-);
-
--- RLS Policies for packing lists
-CREATE POLICY "packing_lists_select" ON packing_lists FOR SELECT USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "packing_lists_insert" ON packing_lists FOR INSERT WITH CHECK (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-
--- RLS Policies for packing items
-CREATE POLICY "packing_items_select" ON packing_items FOR SELECT USING (
-  list_id IN (
-    SELECT id FROM packing_lists WHERE trip_id IN (
-      SELECT trip_id FROM trip_members WHERE user_id = auth.uid()
-    )
-  )
-);
-CREATE POLICY "packing_items_insert" ON packing_items FOR INSERT WITH CHECK (
-  list_id IN (
-    SELECT id FROM packing_lists WHERE trip_id IN (
-      SELECT trip_id FROM trip_members WHERE user_id = auth.uid()
-    )
-  )
-);
-CREATE POLICY "packing_items_update" ON packing_items FOR UPDATE USING (
-  list_id IN (
-    SELECT id FROM packing_lists WHERE trip_id IN (
-      SELECT trip_id FROM trip_members WHERE user_id = auth.uid()
-    )
-  )
-);
-
--- RLS Policies for activity log
-CREATE POLICY "activity_log_select" ON activity_log FOR SELECT USING (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-CREATE POLICY "activity_log_insert" ON activity_log FOR INSERT WITH CHECK (
-  trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = auth.uid())
-);
-
--- Create indexes for performance
-CREATE INDEX idx_trip_members_trip_id ON trip_members(trip_id);
-CREATE INDEX idx_trip_members_user_id ON trip_members(user_id);
-CREATE INDEX idx_itinerary_trip_id ON itinerary_items(trip_id);
-CREATE INDEX idx_expenses_trip_id ON expenses(trip_id);
-CREATE INDEX idx_packing_lists_trip_id ON packing_lists(trip_id);
-CREATE INDEX idx_activity_log_trip_id ON activity_log(trip_id);
-```
-
-## Usage
-
-1. **Sign In**: Use magic link authentication
-2. **Create a Trip**: Enter trip name and click Create
-3. **Share**: Copy the join link or Trip ID to share with friends
-4. **Plan**: Add itinerary items, expenses, and packing lists
-5. **Collaborate**: See real-time updates as friends make changes
-6. **Track**: View budget summaries and activity logs
+- **Responsive Design**: 150px margins on desktop, full-width on mobile
+- **Dark/Light Theme**: Glassmorphic cards with backdrop blur
+- **Modal Panels**: Create/Edit forms for items and expenses
+- **Tab Navigation**: Organized sections for different trip aspects
+- **Swipe Gestures**: Left-swipe to delete items and expenses
+- **Real-time Updates**: All users see changes instantly
+- **Activity Tracking**: Complete history of trip changes
 
 ## Architecture
 
@@ -400,21 +155,48 @@ CREATE INDEX idx_activity_log_trip_id ON activity_log(trip_id);
 - Supabase for authentication and real-time database
 - Row Level Security for data privacy
 - Responsive design for mobile and desktop
+- Modal/panel-based editing (no separate pages)
+- Create and Edit modes unified in same forms
+
+## Usage
+
+1. **Sign In**: Use email and password authentication
+2. **Set Display Name**: New users are prompted on first login
+3. **Create a Trip**: Enter trip name, dates, and currency
+4. **Share**: Copy the join link or Trip ID to invite friends
+5. **Plan**: Add itinerary items, expenses, and packing lists
+6. **Collaborate**: See real-time updates as friends make changes
+7. **Track**: View budgets, balances, and activity logs
+8. **Edit**: Click "Edit" or swipe to modify any item
+9. **Delete**: Swipe left or use Delete button in edit mode
+
+## Data Management
+
+- **Display Names**: Stored in Supabase `user_metadata.display_name`
+- **Nicknames**: Cached in browser localStorage for performance
+- **Email Cache**: Stored in `trip_members.email` for client-side access
+- **Expense Splits**: Tracked in `expense_splits` table with share amounts
+- **Real-time Sync**: All data changes broadcast to connected clients
 
 ## Performance Notes
 
 - Real-time subscriptions update all sections automatically
 - Efficient database queries with proper indexes
-- Lazy loading of user data
+- Lazy loading of user data with caching
 - Responsive UI with minimal re-renders
+- Swipe gestures work on touch devices
 
-## Future Enhancements
+## Mobile Optimization
 
-- Expense splitting calculations
-- PDF export of trip details
-- Integration with Google Maps
-- Photo sharing for trips
-- Budget forecasting
-- Expense settlement tracking
-- Mobile app (React Native)
-- Dark mode toggle
+- Add to Home Screen (iOS) with A2HS prompt
+- Touch-friendly buttons and swipe controls
+- Optimized spacing for small screens
+- Responsive typography and layouts
+- Works offline for viewing (editing requires internet)
+
+## Known Limitations
+
+- Trip members cannot be removed by non-owners
+- Display name changes sync after logout/login
+- Admin API used as fallback (may have rate limits)
+- Swipe-to-delete only on touch devices
