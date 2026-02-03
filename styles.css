@@ -208,6 +208,11 @@ body {
   right: 14px;
 }
 
+#appCard {
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
 #appCard.minimized .stack {
   display: none;
 }
@@ -851,6 +856,11 @@ h2 { font-size: 16px; }
   .app {
     padding: 12px;
     padding-bottom: -10px;
+  }
+
+  #appCard {
+    margin-left: 0;
+    margin-right: 0;
   }
 
   #appCard.minimized {
