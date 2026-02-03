@@ -209,8 +209,13 @@ body {
 }
 
 #appCard {
-  margin-left: 50px;
-  margin-right: 50px;
+  margin-left: 150px;
+  margin-right: 150px;
+}
+
+#tripCard {
+  margin-left: 150px;
+  margin-right: 150px;
 }
 
 #appCard.minimized .stack {
@@ -859,6 +864,11 @@ h2 { font-size: 16px; }
   }
 
   #appCard {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  #tripCard {
     margin-left: 0;
     margin-right: 0;
   }
