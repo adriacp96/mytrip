@@ -1192,6 +1192,18 @@ async function addExpense() {
     // UPDATE existing expense
     setMsg(expensesMsg, "Updating…", "warn");
     
+    // First, delete existing splits to avoid constraint violations
+    const { error: deleteError } = await supabase
+      .from("expense_splits")
+      .delete()
+      .eq("expense_id", expenseIdToUse);
+    
+    if (deleteError) {
+      addExpenseBtn.disabled = false;
+      return setMsg(expensesMsg, "Failed to update splits: " + deleteError.message, "bad");
+    }
+    
+    // Then update the expense
     const { error } = await supabase
       .from("expenses")
       .update({
@@ -1208,17 +1220,6 @@ async function addExpense() {
     if (error) {
       addExpenseBtn.disabled = false;
       return setMsg(expensesMsg, error.message, "bad");
-    }
-    
-    // Delete existing splits before inserting new ones
-    const { error: deleteError } = await supabase
-      .from("expense_splits")
-      .delete()
-      .eq("expense_id", expenseIdToUse);
-    
-    if (deleteError) {
-      addExpenseBtn.disabled = false;
-      return setMsg(expensesMsg, "Failed to update splits: " + deleteError.message, "bad");
     }
   } else {
     // INSERT new expense
