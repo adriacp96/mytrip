@@ -299,11 +299,33 @@ async function signedInUI(user) {
   show(refreshBtn);
   show(userBtn);
   document.querySelector(".topbar").classList.remove("hidden");
+  
+  // Sync user_metadata.display_name to localStorage as nickname
   const metaDisplayName = currentUser.user_metadata?.display_name || "";
   if (metaDisplayName) setStoredNickname(currentUser.id, metaDisplayName);
+  
   userBtn.textContent = getHeaderDisplayName();
   userBtn.style.cursor = "pointer";
   userBtn.title = "Click to set display name";
+
+  // If new user (no display name yet), prompt them to set one
+  if (!metaDisplayName && !getStoredNickname(currentUser.id)) {
+    setTimeout(() => {
+      const nickname = prompt("Welcome! Set your display name (or leave blank to use email):", currentUser.email || "");
+      if (nickname !== null && nickname.trim()) {
+        const trimmed = nickname.trim();
+        supabase.auth.updateUser({
+          data: { display_name: trimmed },
+        }).then(({ data, error }) => {
+          if (!error && data?.user) {
+            currentUser = data.user;
+            setStoredNickname(currentUser.id, trimmed);
+            userBtn.textContent = getHeaderDisplayName();
+          }
+        });
+      }
+    }, 500);
+  }
 
   await handleDeepLinks();
   await loadTrips();
