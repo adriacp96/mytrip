@@ -1210,8 +1210,16 @@ async function addExpense() {
       return setMsg(expensesMsg, error.message, "bad");
     }
     
-    // Delete existing splits
-    await supabase.from("expense_splits").delete().eq("expense_id", expenseIdToUse);
+    // Delete existing splits before inserting new ones
+    const { error: deleteError } = await supabase
+      .from("expense_splits")
+      .delete()
+      .eq("expense_id", expenseIdToUse);
+    
+    if (deleteError) {
+      addExpenseBtn.disabled = false;
+      return setMsg(expensesMsg, "Failed to update splits: " + deleteError.message, "bad");
+    }
   } else {
     // INSERT new expense
     setMsg(expensesMsg, "Adding…", "warn");
