@@ -138,7 +138,8 @@
             <div id="tabContentItinerary" class="tabContent">
               <button id="toggleAddItemBtn" class="btn soft" style="margin-bottom: 12px;">+ Add Item</button>
               <div id="addItemPanel" class="panel hidden">
-                <div class="panelTitle">Add itinerary item</div>
+                <div class="panelTitle" id="itemPanelTitle">Add itinerary item</div>
+                <input type="hidden" id="editItemId" value="" />
 
                 <div class="grid2">
                   <div>
@@ -175,8 +176,10 @@
                   </div>
                 </div>
 
-                <div class="row">
+                <div class="row wrap">
                   <button id="addItemBtn" class="btn primary">Add item</button>
+                  <button id="cancelItemBtn" class="btn ghost hidden">Cancel</button>
+                  <button id="deleteItemBtn" class="btn ghost hidden" style="color: #ef4444;">Delete</button>
                   <div id="itemsMsg" class="msg"></div>
                 </div>
               </div>
@@ -189,7 +192,8 @@
             <div id="tabContentExpenses" class="tabContent hidden">
               <button id="toggleAddExpenseBtn" class="btn soft" style="margin-bottom: 12px;">+ Add Expense</button>
               <div id="addExpensePanel" class="panel hidden">
-                <div class="panelTitle">Add expense</div>
+                <div class="panelTitle" id="expensePanelTitle">Add expense</div>
+                <input type="hidden" id="editExpenseId" value="" />
 
                 <div class="grid2">
                   <div>
@@ -243,8 +247,10 @@
                   </div>
                 </div>
 
-                <div class="row">
+                <div class="row wrap">
                   <button id="addExpenseBtn" class="btn primary">Add expense</button>
+                  <button id="cancelExpenseBtn" class="btn ghost hidden">Cancel</button>
+                  <button id="deleteExpenseBtn" class="btn ghost hidden" style="color: #ef4444;">Delete</button>
                   <div id="expensesMsg" class="msg"></div>
                 </div>
               </div>
