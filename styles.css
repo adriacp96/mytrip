@@ -894,7 +894,7 @@ h2 { font-size: 16px; }
   h1 { font-size: 18px; }
   h2 { font-size: 16px; }
 
-  .stack { padding: 12px; }
+  .stack { padding: 12px; gap: 20px; }
 
   .cardHeader { padding: 14px 12px 10px; }
 
