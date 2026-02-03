@@ -842,7 +842,7 @@ h2 { font-size: 16px; }
 @media (max-width: 720px) {
   .app {
     padding: 12px;
-    padding-bottom: 96px;
+    padding-bottom: -10px;
   }
 
   .topbar {
