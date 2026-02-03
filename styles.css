@@ -123,7 +123,7 @@ body {
 .brandName { font-weight: 900; letter-spacing: .2px; font-size: 16px; }
 .brandSub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 
-.topRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-top: 2px; }
+.topRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-top: 2px; justify-content: space-between; width: 100%; }
 .topRight .btn,
 .topRight .userEmail {
   height: 36px;
