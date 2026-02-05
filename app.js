@@ -1869,30 +1869,53 @@ async function loadActivityLog() {
     .select("user_id,action,details,created_at")
     .eq("trip_id", currentTrip.id)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(100);
 
   if (error || !data?.length) {
     activityLog.innerHTML = `<div class="msg">No activity yet.</div>`;
     return;
   }
 
-  for (const log of data) {
-    const email = await getUserEmail(log.user_id);
-    activityLog.appendChild(renderActivityItem(log, email));
+  // Show first 3 items
+  for (let i = 0; i < Math.min(3, data.length); i++) {
+    const log = data[i];
+    const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
+    activityLog.appendChild(renderActivityItem(log, displayName));
+  }
+
+  // Add "Show more" button if there are more than 3 items
+  if (data.length > 3) {
+    const showMoreBtn = document.createElement("button");
+    showMoreBtn.className = "btn outlined small";
+    showMoreBtn.textContent = `Show ${data.length - 3} more`;
+    showMoreBtn.style.width = "100%";
+    showMoreBtn.addEventListener("click", async () => {
+      // Clear and show all items
+      activityLog.innerHTML = "";
+      for (const log of data) {
+        const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
+        activityLog.appendChild(renderActivityItem(log, displayName));
+      }
+      // Remove button after expanding
+      showMoreBtn.remove();
+    });
+    activityLog.appendChild(showMoreBtn);
   }
 }
 
-function renderActivityItem(log, email) {
+function renderActivityItem(log, displayName) {
   const el = document.createElement("div");
   el.className = "tile";
   const date = fmtDate(log.created_at);
   const time = new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const actionText = log.action.replace(/_/g, " ");
-
+  
+  // Format action text to be more descriptive
+  let actionText = log.action.replace(/_/g, " ");
+  
   el.innerHTML = `
     <div>
       <div class="tileTitle">${esc(actionText)}</div>
-      <div class="tileMeta">${esc(email)} · ${date} ${time}</div>
+      <div class="tileMeta">by ${esc(displayName)} · ${date} ${time}</div>
     </div>
   `;
 
