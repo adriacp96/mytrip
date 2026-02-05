@@ -147,6 +147,7 @@ const expensePanelTitle = $("expensePanelTitle");
 const expensesList = $("expensesList");
 const budgetSummary = $("budgetSummary");
 const expensesMsg = $("expensesMsg");
+const expensesTotal = $("expensesTotal");
 
 // members
 const membersList = $("membersList");
@@ -1372,6 +1373,7 @@ async function loadExpenses() {
   setMsg(expensesMsg, "Loading expenses…", "warn");
   expensesList.innerHTML = "";
   budgetSummary.innerHTML = "";
+  expensesTotal.innerHTML = "";
 
   const { data, error } = await supabase
     .from("expenses")
@@ -1384,6 +1386,7 @@ async function loadExpenses() {
   if (!data?.length) {
     setMsg(expensesMsg, "No expenses yet.", "warn");
     budgetSummary.innerHTML = renderBudgetSummary([], currentTrip.currency);
+    expensesTotal.innerHTML = "";
     return;
   }
 
@@ -1435,6 +1438,10 @@ async function loadExpenses() {
     const splitUserIds = splitMap[exp.id] || [];
     expensesList.appendChild(renderExpenseTile(exp, paidByName, myShare, splitUserIds, memberMap));
   }
+
+  // Calculate and display total
+  const total = data.reduce((sum, e) => sum + (e.amount || 0), 0);
+  expensesTotal.innerHTML = `Total: ${fmtCurrency(total, currentTrip.currency)}`;
 }
 
 function renderBudgetSummary(expenses, currency, myShareMap = {}) {
