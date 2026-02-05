@@ -318,11 +318,10 @@ async function signedInUI(user) {
         const trimmed = nickname.trim();
         supabase.auth.updateUser({
           data: { display_name: trimmed },
-        }).then(async ({ data, error }) => {
+        }).then(({ data, error }) => {
           if (!error && data?.user) {
             currentUser = data.user;
             setStoredNickname(currentUser.id, trimmed);
-            await syncDisplayNameToTrips(currentUser.id, trimmed);
             userBtn.textContent = getHeaderDisplayName();
           }
         });
@@ -442,24 +441,6 @@ async function getUserNameWithEmail(userId) {
   const result = displayName || email || "";
   userNameCache[userId] = result;
   return result;
-}
-
-// Update display_name in trip_members for all trips where the user is a member
-// Only called when user explicitly updates their display name
-async function syncDisplayNameToTrips(userId, displayName) {
-  if (!userId) return;
-  // Don't await - let it happen in background to avoid recursion
-  supabase
-    .from("trip_members")
-    .update({ display_name: displayName || null })
-    .eq("user_id", userId)
-    .then(() => {
-      console.log('Display name synced to trips');
-    })
-    .catch((e) => {
-      // Silently fail - display_name column might not exist
-      console.log('Could not sync display name (column may not exist yet)');
-    });
 }
 
 // Helper to insert trip member, excluding display_name to avoid recursion
@@ -1990,11 +1971,10 @@ userBtn.addEventListener("click", () => {
   const trimmed = next.trim();
   supabase.auth.updateUser({
     data: { display_name: trimmed || null },
-  }).then(async ({ data, error }) => {
+  }).then(({ data, error }) => {
     if (error) return setMsg(tripsMsg, error.message, "bad");
     if (data?.user) currentUser = data.user;
     setStoredNickname(currentUser.id, trimmed);
-    await syncDisplayNameToTrips(currentUser.id, trimmed);
     userNameCache[currentUser.id] = formatNameWithEmail(trimmed, currentUser.email);
     userBtn.textContent = getHeaderDisplayName();
     loadMembers();
