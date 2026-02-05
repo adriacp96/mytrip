@@ -455,20 +455,42 @@ async function loadTrips() {
   setMsg(tripsMsg, "Loading trips…", "warn");
   tripsList.innerHTML = "";
 
-  const { data, error } = await supabase
+  // First, get trip memberships (avoids RLS recursion with joins)
+  const { data: memberships, error: membersError } = await supabase
     .from("trip_members")
-    .select("role, trips(id,title,start_date,end_date,description,currency,created_at,owner_id)")
-    .eq("user_id", currentUser.id)
-    .order("start_date", { ascending: true, referencedTable: "trips", nullsFirst: false });
+    .select("trip_id, role")
+    .eq("user_id", currentUser.id);
 
-  if (error) return setMsg(tripsMsg, error.message, "bad");
+  if (membersError) return setMsg(tripsMsg, membersError.message, "bad");
+  
+  if (!memberships || memberships.length === 0) {
+    setMsg(tripsMsg, "No trips yet. Create one or join with a Trip ID.", "warn");
+    return;
+  }
 
-  const trips = (data || [])
-    .map((row) => ({ ...row.trips, my_role: row.role }))
+  // Get trip IDs and create role map
+  const tripIds = memberships.map(m => m.trip_id);
+  const roleMap = {};
+  memberships.forEach(m => roleMap[m.trip_id] = m.role);
+
+  // Now fetch trip details separately (bypasses RLS recursion)
+  const { data: tripData, error: tripsError } = await supabase
+    .from("trips")
+    .select("id,title,start_date,end_date,description,currency,created_at,owner_id")
+    .in("id", tripIds);
+
+  if (tripsError) return setMsg(tripsMsg, tripsError.message, "bad");
+
+  const trips = (tripData || [])
+    .map((trip) => ({ ...trip, my_role: roleMap[trip.id] }))
     .filter(Boolean);
 
-  if (!trips.length) setMsg(tripsMsg, "No trips yet. Create one or join with a Trip ID.", "warn");
-  else setMsg(tripsMsg, "", "");
+  if (!trips.length) {
+    setMsg(tripsMsg, "No trips yet. Create one or join with a Trip ID.", "warn");
+    return;
+  }
+  
+  setMsg(tripsMsg, "", "");
 
   // Sort chronologically: upcoming trips first, then past trips
   const today = new Date();
