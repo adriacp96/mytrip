@@ -955,7 +955,7 @@ function renderItemTile(it, index, total) {
 
   const date = it.day_date ? esc(it.day_date) : "No date";
   const loc = it.location ? esc(it.location) : "No location";
-  const updated = it.updated_at ? new Date(it.updated_at).toLocaleString() : "";
+  const updated = it.updated_at ? fmtDate(it.updated_at) : "";
   const icon = getCategoryIcon(it.category);
   
   const canMoveUp = index > 0;
@@ -1645,7 +1645,7 @@ function renderMemberTile(member, email, balanceInfo = { total: 0, details: {} }
     <div class="tileTop">
       <div>
         <div class="tileTitle">${esc(displayName)}</div>
-        <div class="tileMeta">Joined ${new Date(member.joined_at).toLocaleDateString()} · ${balanceText}</div>
+        <div class="tileMeta">Joined ${fmtDate(member.joined_at)} · ${balanceText}</div>
       </div>
       <div class="pills">
         <span class="pill">${esc(member.role)}</span>
@@ -1881,13 +1881,14 @@ async function loadActivityLog() {
 function renderActivityItem(log, email) {
   const el = document.createElement("div");
   el.className = "tile";
-  const time = new Date(log.created_at).toLocaleString();
+  const date = fmtDate(log.created_at);
+  const time = new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const actionText = log.action.replace(/_/g, " ");
 
   el.innerHTML = `
     <div>
       <div class="tileTitle">${esc(actionText)}</div>
-      <div class="tileMeta">${esc(email)} · ${time}</div>
+      <div class="tileMeta">${esc(email)} · ${date} ${time}</div>
     </div>
   `;
 
