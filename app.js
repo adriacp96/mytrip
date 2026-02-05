@@ -1969,215 +1969,267 @@ function cleanupRealtime() {
   }
 }
 
-// ---- wiring (critical auth listeners attached immediately)
+// ---- wiring
 loginBtn.addEventListener("click", sendMagicLink);
 logoutBtn.addEventListener("click", logOut);
 refreshBtn.addEventListener("click", () => {
   window.location.reload();
 });
 
-// Schedule setup of secondary (non-critical) event listeners
-if (typeof requestIdleCallback !== 'undefined') {
-  requestIdleCallback(() => setupSecondaryEventListeners());
-} else {
-  setTimeout(() => setupSecondaryEventListeners(), 0);
+if (toggleCreateBtn && createPanel) {
+  toggleCreateBtn.addEventListener("click", () => {
+    createPanel.classList.toggle("hidden");
+    joinPanel?.classList.add("hidden");
+  });
 }
 
-function setupSecondaryEventListeners() {
-  // Trip creation/joining
-  if (toggleCreateBtn && createPanel) {
-    toggleCreateBtn.addEventListener("click", () => {
-      createPanel.classList.toggle("hidden");
-      joinPanel?.classList.add("hidden");
-    });
-  }
-
-  if (toggleJoinBtn && joinPanel) {
-    toggleJoinBtn.addEventListener("click", () => {
-      joinPanel.classList.toggle("hidden");
-      createPanel?.classList.add("hidden");
-    });
-  }
-
-  toggleAddItemBtn.addEventListener("click", () => enterItemCreateMode());
-  toggleAddExpenseBtn.addEventListener("click", () => enterExpenseCreateMode());
-  togglePackingBtn.addEventListener("click", () => addPackingPanel.classList.toggle("hidden"));
-
-  if (expenseSplitAll && expenseSplitList) {
-    expenseSplitAll.addEventListener("change", () => {
-      const checked = expenseSplitAll.checked;
-      expenseSplitList.classList.toggle("disabled", checked);
-      document.querySelectorAll("input[data-user-id]").forEach(cb => cb.checked = true);
-    });
-  }
-
-  // Display name editor
-  userBtn.addEventListener("click", () => {
-    if (!currentUser) return;
-    const name = prompt("Set your display name", 
-      currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id) || "");
-    if (name === null) return;
-    const trimmed = name.trim();
-    supabase.auth.updateUser({ data: { display_name: trimmed || null } })
-      .then(({ data, error }) => {
-        if (error) return setMsg(tripsMsg, error.message, "bad");
-        if (data?.user) currentUser = data.user;
-        setStoredNickname(currentUser.id, trimmed);
-        userNameCache[currentUser.id] = formatNameWithEmail(trimmed, currentUser.email);
-        userBtn.textContent = getHeaderDisplayName();
-        loadMembers();
-      });
+if (toggleJoinBtn && joinPanel) {
+  toggleJoinBtn.addEventListener("click", () => {
+    joinPanel.classList.toggle("hidden");
+    createPanel?.classList.add("hidden");
   });
+}
 
-  // A2HS and auth mode toggle
-  a2hsClose?.addEventListener("click", () => {
-    localStorage.setItem("a2hsDismissed", "1");
-    a2hsOverlay?.classList.add("hidden");
+toggleAddItemBtn.addEventListener("click", () => {
+  enterItemCreateMode();
+});
+
+toggleAddExpenseBtn.addEventListener("click", () => {
+  enterExpenseCreateMode();
+});
+
+togglePackingBtn.addEventListener("click", () => {
+  addPackingPanel.classList.toggle("hidden");
+});
+
+if (expenseSplitAll && expenseSplitList) {
+  expenseSplitAll.addEventListener("change", () => {
+    const checked = expenseSplitAll.checked;
+    expenseSplitList.classList.toggle("disabled", checked);
+    const boxes = expenseSplitList.querySelectorAll("input[data-user-id]");
+    boxes.forEach((cb) => {
+      cb.checked = true;
+    });
   });
+}
 
-  $("toggleAuthMode").addEventListener("click", () => {
-    authMode = authMode === "signin" ? "signup" : "signin";
-    if (authMode === "signin") {
-      loginBtn.textContent = "Sign in";
-      $("toggleAuthMode").textContent = "Create account";
-      $("toggleAuthMode").previousElementSibling.textContent = "Don't have an account? ";
-    } else {
-      loginBtn.textContent = "Create account";
-      $("toggleAuthMode").textContent = "Sign in";
-      $("toggleAuthMode").previousElementSibling.textContent = "Already have an account? ";
+userBtn.addEventListener("click", () => {
+  if (!currentUser) return;
+  const currentDisplayName = currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id);
+  const next = prompt("Set your display name", currentDisplayName || "");
+  if (next === null) return;
+  const trimmed = next.trim();
+  supabase.auth.updateUser({
+    data: { display_name: trimmed || null },
+  }).then(({ data, error }) => {
+    if (error) return setMsg(tripsMsg, error.message, "bad");
+    if (data?.user) currentUser = data.user;
+    setStoredNickname(currentUser.id, trimmed);
+    userNameCache[currentUser.id] = formatNameWithEmail(trimmed, currentUser.email);
+    userBtn.textContent = getHeaderDisplayName();
+    loadMembers();
+  });
+});
+
+a2hsClose?.addEventListener("click", () => {
+  localStorage.setItem("a2hsDismissed", "1");
+  a2hsOverlay.classList.add("hidden");
+});
+
+showA2HS();
+
+// Toggle between sign in and sign up
+$("toggleAuthMode").addEventListener("click", () => {
+  authMode = authMode === "signin" ? "signup" : "signin";
+  if (authMode === "signin") {
+    loginBtn.textContent = "Sign in";
+    $("toggleAuthMode").textContent = "Create account";
+    $("toggleAuthMode").previousElementSibling.textContent = "Don't have an account? ";
+  } else {
+    loginBtn.textContent = "Create account";
+    $("toggleAuthMode").textContent = "Sign in";
+    $("toggleAuthMode").previousElementSibling.textContent = "Already have an account? ";
+  }
+  setMsg(authMsg, "", "");
+});
+
+createTripBtn.addEventListener("click", createTrip);
+joinTripBtn.addEventListener("click", joinTrip);
+
+closeTripBtn.addEventListener("click", closeTrip);
+copyTripIdBtn.addEventListener("click", copyTripId);
+copyJoinLinkBtn.addEventListener("click", copyJoinLink);
+
+saveTripBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  saveTripSettings();
+});
+deleteTripBtn.addEventListener("click", deleteTrip);
+
+addItemBtn.addEventListener("click", addItem);
+addExpenseBtn.addEventListener("click", addExpense);
+cancelItemBtn.addEventListener("click", () => {
+  addItemPanel.classList.add("hidden");
+  enterItemCreateMode();
+});
+cancelExpenseBtn.addEventListener("click", () => {
+  addExpensePanel.classList.add("hidden");
+  enterExpenseCreateMode();
+});
+deleteItemBtn.addEventListener("click", async () => {
+  const itemId = editItemId.value;
+  if (itemId) await deleteItem(itemId);
+});
+deleteExpenseBtn.addEventListener("click", async () => {
+  const expenseId = editExpenseId.value;
+  if (expenseId) await deleteExpense(expenseId);
+});
+createPackingListBtn.addEventListener("click", createPackingList);
+
+// Tab navigation
+document.querySelectorAll(".tabBtn").forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+itemsList.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === "edit") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) enterItemEditMode(itemId);
+  } else if (action === "moveup") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) moveItemUp(itemId);
+  } else if (action === "movedown") {
+    const itemId = btn.dataset.itemId;
+    if (itemId) moveItemDown(itemId);
+  }
+});
+
+expensesList.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "edit-expense") {
+    enterExpenseEditMode(btn.dataset.expenseId);
+  }
+});
+
+let swipeStartX = 0;
+let swipeActiveTile = null;
+
+expensesList.addEventListener("touchstart", (e) => {
+  const tile = e.target.closest(".tile.swipeable");
+  if (!tile) return;
+  swipeActiveTile = tile;
+  swipeStartX = e.touches[0].clientX;
+  tile.classList.remove("swipeHint");
+}, { passive: true });
+
+expensesList.addEventListener("touchmove", (e) => {
+  if (!swipeActiveTile) return;
+  const currentX = e.touches[0].clientX;
+  const deltaX = Math.min(0, currentX - swipeStartX);
+  swipeActiveTile.style.transform = `translateX(${deltaX}px)`;
+  if (deltaX < -80) swipeActiveTile.classList.add("swipeHint");
+  else swipeActiveTile.classList.remove("swipeHint");
+}, { passive: true });
+
+expensesList.addEventListener("touchend", async () => {
+  if (!swipeActiveTile) return;
+  const computed = getComputedStyle(swipeActiveTile);
+  const matrix = new DOMMatrixReadOnly(computed.transform);
+  const translateX = matrix.m41 || 0;
+  const expenseId = swipeActiveTile.dataset.expenseId;
+  swipeActiveTile.style.transform = "";
+  swipeActiveTile.classList.remove("swipeHint");
+  swipeActiveTile = null;
+
+  if (translateX <= -80 && expenseId) {
+    await deleteExpense(expenseId);
+  }
+});
+
+// Swipe to delete for itinerary items
+let swipeStartXItem = 0;
+let swipeActiveTileItem = null;
+
+itemsList.addEventListener("touchstart", (e) => {
+  const tile = e.target.closest(".tile.swipeable");
+  if (!tile) return;
+  swipeActiveTileItem = tile;
+  swipeStartXItem = e.touches[0].clientX;
+  tile.classList.remove("swipeHint");
+}, { passive: true });
+
+itemsList.addEventListener("touchmove", (e) => {
+  if (!swipeActiveTileItem) return;
+  const currentX = e.touches[0].clientX;
+  const deltaX = Math.min(0, currentX - swipeStartXItem);
+  swipeActiveTileItem.style.transform = `translateX(${deltaX}px)`;
+  if (deltaX < -80) swipeActiveTileItem.classList.add("swipeHint");
+  else swipeActiveTileItem.classList.remove("swipeHint");
+}, { passive: true });
+
+itemsList.addEventListener("touchend", async () => {
+  if (!swipeActiveTileItem) return;
+  const computed = getComputedStyle(swipeActiveTileItem);
+  const matrix = new DOMMatrixReadOnly(computed.transform);
+  const translateX = matrix.m41 || 0;
+  const itemId = swipeActiveTileItem.dataset.itemId;
+  swipeActiveTileItem.style.transform = "";
+  swipeActiveTileItem.classList.remove("swipeHint");
+  swipeActiveTileItem = null;
+
+  if (translateX <= -80 && itemId) {
+    await deleteItem(itemId);
+  }
+});
+
+membersList.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "remove-member") {
+    const userId = btn.dataset.user;
+    const ok = confirm("Remove this member from the trip?");
+    if (ok) {
+      await supabase.from("trip_members").delete().eq("trip_id", currentTrip.id).eq("user_id", userId);
+      await loadMembers();
     }
-    setMsg(authMsg, "", "");
-  });
+  }
+});
 
-  // Trip operations
-  createTripBtn.addEventListener("click", createTrip);
-  joinTripBtn.addEventListener("click", joinTrip);
-  closeTripBtn.addEventListener("click", closeTrip);
-  copyTripIdBtn.addEventListener("click", copyTripId);
-  copyJoinLinkBtn.addEventListener("click", copyJoinLink);
-  deleteTripBtn.addEventListener("click", deleteTrip);
-
-  saveTripBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    saveTripSettings();
-  });
-
-  // Itinerary and expense operations
-  addItemBtn.addEventListener("click", addItem);
-  addExpenseBtn.addEventListener("click", addExpense);
-  createPackingListBtn.addEventListener("click", createPackingList);
-
-  cancelItemBtn.addEventListener("click", () => {
-    addItemPanel.classList.add("hidden");
-    enterItemCreateMode();
-  });
-  cancelExpenseBtn.addEventListener("click", () => {
-    addExpensePanel.classList.add("hidden");
-    enterExpenseCreateMode();
-  });
-
-  deleteItemBtn.addEventListener("click", async () => {
-    const itemId = editItemId.value;
-    if (itemId) await deleteItem(itemId);
-  });
-  deleteExpenseBtn.addEventListener("click", async () => {
-    const expenseId = editExpenseId.value;
-    if (expenseId) await deleteExpense(expenseId);
-  });
-
-  // Tab navigation
-  document.querySelectorAll(".tabBtn").forEach(btn => {
-    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-  });
-
-  // List event delegation
-  itemsList.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-action]");
-    if (!btn) return;
-    const { action, itemId } = btn.dataset;
-    if (action === "edit" && itemId) enterItemEditMode(itemId);
-    else if (action === "moveup" && itemId) moveItemUp(itemId);
-    else if (action === "movedown" && itemId) moveItemDown(itemId);
-  });
-
-  expensesList.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-action]");
-    if (btn?.dataset.action === "edit-expense") enterExpenseEditMode(btn.dataset.expenseId);
-  });
-
-  membersList.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-action]");
-    if (btn?.dataset.action === "remove-member") {
-      if (confirm("Remove this member from the trip?")) {
-        await supabase.from("trip_members").delete()
-          .eq("trip_id", currentTrip.id).eq("user_id", btn.dataset.user);
-        await loadMembers();
-      }
-    }
-  });
-
-  // Packing list interactions
-  packingListsContainer.addEventListener("change", async (e) => {
-    if (!e.target.classList.contains("packingCheckbox")) return;
-    const { itemId } = e.target.dataset;
+packingListsContainer.addEventListener("change", async (e) => {
+  if (e.target.classList.contains("packingCheckbox")) {
+    const itemId = e.target.dataset.itemId;
     const packed = e.target.checked;
     await supabase.from("packing_items").update({ packed }).eq("id", itemId);
     await loadPackingLists();
-  });
+  }
+});
 
-  packingListsContainer.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-action]");
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const { action, listId, itemId } = btn.dataset;
-    if (action === "delete-list" && listId) deletePackingList(listId);
-    else if (action === "delete-packing-item" && itemId) deletePackingItem(itemId);
-  });
-
-  // Swipe-to-delete for expenses
-  setupSwipeGestures(expensesList, "expenseId", deleteExpense);
-
-  // Swipe-to-delete for itinerary items
-  setupSwipeGestures(itemsList, "itemId", deleteItem);
-
-  // Show A2HS prompt after primary UI is ready
-  showA2HS();
-}
-
-// Helper function for swipe-to-delete gesture
-function setupSwipeGestures(container, idAttr, deleteCallback) {
-  let swipeStartX = 0, swipeActiveTile = null;
-
-  container.addEventListener("touchstart", (e) => {
-    const tile = e.target.closest(".tile.swipeable");
-    if (tile) {
-      swipeActiveTile = tile;
-      swipeStartX = e.touches[0].clientX;
-      tile.classList.remove("swipeHint");
-    }
-  }, { passive: true });
-
-  container.addEventListener("touchmove", (e) => {
-    if (!swipeActiveTile) return;
-    const deltaX = Math.min(0, e.touches[0].clientX - swipeStartX);
-    swipeActiveTile.style.transform = `translateX(${deltaX}px)`;
-    swipeActiveTile.classList.toggle("swipeHint", deltaX < -80);
-  }, { passive: true });
-
-  container.addEventListener("touchend", async () => {
-    if (!swipeActiveTile) return;
-    const matrix = new DOMMatrixReadOnly(getComputedStyle(swipeActiveTile).transform);
-    const translateX = matrix.m41 || 0;
-    const id = swipeActiveTile.dataset[idAttr];
-    swipeActiveTile.style.transform = "";
-    swipeActiveTile.classList.remove("swipeHint");
-    swipeActiveTile = null;
-
-    if (translateX <= -80 && id) await deleteCallback(id);
-  });
-}
+packingListsContainer.addEventListener("click", (e) => {
+  console.log("Packing list click event:", e.target);
+  const btn = e.target.closest("[data-action]");
+  console.log("Button found:", btn);
+  if (!btn) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const action = btn.dataset.action;
+  console.log("Action:", action);
+  
+  if (action === "delete-list") {
+    const listId = btn.dataset.listId;
+    console.log("Delete list ID:", listId);
+    if (listId) deletePackingList(listId);
+  } else if (action === "delete-packing-item") {
+    const itemId = btn.dataset.itemId;
+    console.log("Delete item ID:", itemId);
+    if (itemId) deletePackingItem(itemId);
+  }
+});
 
 // ---- init
 (async function init() {

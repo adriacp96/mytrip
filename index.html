@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
     <title>MyTrip</title>
-    <link rel="preload" href="./styles.css" as="style" />
     <link rel="stylesheet" href="./styles.css" />
     <link rel="manifest" href="./manifest.json" />
     <link rel="apple-touch-icon" href="./icons/app-icon.png" />
@@ -12,16 +11,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="MyTrip" />
-    <style>
-      /* Minimal critical path styling for faster initial render */
-      html, body { margin: 0; padding: 0; height: 100%; }
-      #vantaBackground { 
-        position: fixed; 
-        inset: 0; 
-        background: linear-gradient(135deg, #68b3d7 0%, #87ceeb 100%); 
-        z-index: -1; 
-      }
-    </style>
   </head>
 
   <body>
@@ -65,16 +54,7 @@
                 <input id="password" class="input authInput" type="password" placeholder="Password" autocomplete="current-password" />
               </div>
               <div>
-                <button id="loginBtn" class="gradient-btn primary">
-                  <div id="container-stars">
-                    <div id="stars"></div>
-                  </div>
-                  <div id="glow">
-                    <div class="circle"></div>
-                    <div class="circle"></div>
-                  </div>
-                  <strong>Sign in</strong>
-                </button>
+                <button id="loginBtn" class="btn primary" style="width: 100%">Sign in</button>
                 <div id="authMsg" class="msg"></div>
                 <div style="text-align: center; margin-top: 12px;">
                   <span style="color: var(--muted); font-size: 13px;">Don't have an account? </span>
@@ -412,45 +392,32 @@
       </footer>
     </div>
 
-    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script async src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.clouds.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.clouds.min.js"></script>
     <script type="module" src="./app.js"></script>
     <script>
-      // Defer Vanta initialization to avoid blocking page render
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initVanta);
-      } else {
-        // If DOMContentLoaded already fired
-        setTimeout(initVanta, 100);
-      }
-      
-      function initVanta() {
-        if (typeof VANTA !== 'undefined' && typeof THREE !== 'undefined') {
-          VANTA.CLOUDS({
-            el: '#vantaBackground',
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            backgroundAlpha: 1,
-            backgroundColor: 0xffffff,
-            cloudColor: 0xadbdde,
-            cloudShadowColor: 0x183370,
-            skyColor: 0x68b3d7,
-            sunColor: 0xff6079,
-            sunGlareColor: 0xff4e33,
-            sunlightColor: 0xff6093,
-            speed: 0.4,
-            scale: 3,
-            scaleMobile: 12,
-            mouseEase: true
-          });
-        } else {
-          // Retry if libraries aren't loaded yet
-          setTimeout(initVanta, 200);
-        }
-      }
+      window.addEventListener('load', function() {
+        VANTA.CLOUDS({
+          el: '#vantaBackground',
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          backgroundAlpha: 1,
+          backgroundColor: 0xffffff,
+          cloudColor: 0xadbdde,
+          cloudShadowColor: 0x183370,
+          skyColor: 0x68b3d7,
+          sunColor: 0xff6079,
+          sunGlareColor: 0xff4e33,
+          sunlightColor: 0xff6093,
+          speed: 0.4,
+          scale: 3,
+          scaleMobile: 12,
+          mouseEase: true
+        });
+      });
     </script>
   </body>
 </html>
