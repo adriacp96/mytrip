@@ -344,7 +344,7 @@ async function handleDeepLinks() {
   const trip = params.get("trip");
 
   if (join) {
-    setMsg(tripsMsg, "Joining from link…", "warn");
+    setLoader(tripsMsg);
     const { error } = await insertTripMember({
       trip_id: join,
       user_id: currentUser.id,
@@ -578,7 +578,7 @@ async function createTrip() {
   if (!title) return setMsg(tripsMsg, "Trip title required.", "warn");
 
   createTripBtn.disabled = true;
-  setMsg(tripsMsg, "Creating…", "warn");
+  setLoader(tripsMsg);
 
   const { data: tripRows, error: tripErr } = await supabase
     .from("trips")
@@ -618,7 +618,7 @@ async function joinTrip() {
   if (!tripId) return setMsg(tripsMsg, "Enter a Trip ID.", "warn");
 
   joinTripBtn.disabled = true;
-  setMsg(tripsMsg, "Joining…", "warn");
+  setLoader(tripsMsg);
 
   const { error } = await insertTripMember({
     trip_id: tripId,
@@ -749,7 +749,7 @@ async function saveTripSettings() {
   if (!title) return setMsg(tripMsg, "Title required.", "warn");
 
   saveTripBtn.disabled = true;
-  setMsg(tripMsg, "Saving…", "warn");
+  setLoader(tripMsg);
 
   const { error } = await supabase
     .from("trips")
@@ -774,7 +774,7 @@ async function deleteTrip() {
   if (!ok) return;
 
   deleteTripBtn.disabled = true;
-  setMsg(tripMsg, "Deleting…", "warn");
+  setLoader(tripMsg);
 
   const { error } = await supabase
     .from("trips")
@@ -868,7 +868,7 @@ async function addItem() {
   
   if (isEditMode) {
     // UPDATE existing item
-    setMsg(itemsMsg, "Updating…", "warn");
+    setLoader(itemsMsg);
     
     const { error } = await supabase
       .from("itinerary_items")
@@ -930,7 +930,7 @@ async function addItem() {
 async function loadItems() {
   if (!currentTrip) return;
 
-  setMsg(itemsMsg, "Loading itinerary…", "warn");
+  setLoader(itemsMsg);
   itemsList.innerHTML = "";
 
   const { data, error } = await supabase
@@ -1144,7 +1144,7 @@ async function deleteItem(itemId) {
   if (!ok) return;
 
   deleteItemBtn.disabled = true;
-  setMsg(itemsMsg, "Deleting…", "warn");
+  setLoader(itemsMsg);
 
   const { error } = await supabase.from("itinerary_items").delete().eq("id", itemId);
 
@@ -1250,7 +1250,7 @@ async function addExpense() {
 
   if (isEditMode) {
     // UPDATE existing expense
-    setMsg(expensesMsg, "Updating…", "warn");
+    setLoader(expensesMsg);
     
     // First, delete existing splits to avoid constraint violations
     const { error: deleteError } = await supabase
@@ -1408,7 +1408,7 @@ async function loadPaidByOptions() {
 async function loadExpenses() {
   if (!currentTrip) return;
 
-  setMsg(expensesMsg, "Loading expenses…", "warn");
+  setLoader(expensesMsg);
   expensesList.innerHTML = "";
   budgetSummary.innerHTML = "";
 
@@ -1523,7 +1523,7 @@ async function deleteExpense(expenseId) {
   if (!ok) return;
 
   deleteExpenseBtn.disabled = true;
-  setMsg(expensesMsg, "Deleting…", "warn");
+  setLoader(expensesMsg);
 
   const { error } = await supabase.from("expenses").delete().eq("id", expenseId);
   
@@ -1589,7 +1589,7 @@ async function calculateMemberBalances(userId) {
 async function loadMembers() {
   if (!currentTrip) return;
 
-  setMsg(membersMsg, "Loading members…", "warn");
+  setLoader(membersMsg);
   membersList.innerHTML = "";
 
   const { data, error } = await supabase
@@ -1669,7 +1669,7 @@ async function createPackingList() {
   if (!title) return setMsg(packingMsg, "List name required.", "warn");
 
   createPackingListBtn.disabled = true;
-  setMsg(packingMsg, "Creating…", "warn");
+  setLoader(packingMsg);
 
   const { error } = await supabase.from("packing_lists").insert({
     trip_id: currentTrip.id,
