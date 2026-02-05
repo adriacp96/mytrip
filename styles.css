@@ -144,25 +144,30 @@ body {
 
 /* Loader Animation */
 .loader {
-  width: 120px;
-  height: 22px;
-  border-radius: 20px;
-  color: #514b82;
-  border: 2px solid;
+  width: 108px;
+  height: 60px;
+  color: #269af2;
+  --c: radial-gradient(farthest-side,currentColor 96%,#0000);
+  background: 
+    var(--c) 100% 100% /30% 60%,
+    var(--c) 70%  0    /50% 100%,
+    var(--c) 0    100% /36% 68%,
+    var(--c) 27%  18%  /26% 40%,
+    linear-gradient(currentColor 0 0) bottom/67% 58%;
+  background-repeat: no-repeat;
   position: relative;
   margin: 0 auto;
 }
-.loader::before {
+.loader:after {
   content: "";
   position: absolute;
-  margin: 2px;
-  inset: 0 100% 0 0;
-  border-radius: inherit;
-  background: currentColor;
-  animation: l6 2s infinite;
+  inset: 0;
+  background: inherit;
+  opacity: 0.4;
+  animation: l7 1s infinite;
 }
-@keyframes l6 {
-  100% { inset: 0; }
+@keyframes l7 {
+  to { transform: scale(1.8); opacity: 0; }
 }
 
 @media (max-width: 480px) {
