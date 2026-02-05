@@ -302,9 +302,7 @@ async function signedInUI(user) {
   
   // Sync user_metadata.display_name to localStorage as nickname
   const metaDisplayName = currentUser.user_metadata?.display_name || "";
-  if (metaDisplayName) {
-    setStoredNickname(currentUser.id, metaDisplayName);
-  }
+  if (metaDisplayName) setStoredNickname(currentUser.id, metaDisplayName);
   
   userBtn.textContent = getHeaderDisplayName();
   userBtn.style.cursor = "pointer";
@@ -318,11 +316,10 @@ async function signedInUI(user) {
         const trimmed = nickname.trim();
         supabase.auth.updateUser({
           data: { display_name: trimmed },
-        }).then(async ({ data, error }) => {
+        }).then(({ data, error }) => {
           if (!error && data?.user) {
             currentUser = data.user;
             setStoredNickname(currentUser.id, trimmed);
-            await syncDisplayNameToTrips(currentUser.id, trimmed);
             userBtn.textContent = getHeaderDisplayName();
           }
         });
@@ -342,12 +339,11 @@ async function handleDeepLinks() {
 
   if (join) {
     setMsg(tripsMsg, "Joining from link…", "warn");
-    const { error } = await insertTripMember({
+    const { error } = await supabase.from("trip_members").insert({
       trip_id: join,
       user_id: currentUser.id,
       role: "editor",
       email: currentUser.email,
-      display_name: currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id) || null,
     });
     if (!error) {
       const t = await fetchTrip(join);
@@ -442,31 +438,6 @@ async function getUserNameWithEmail(userId) {
   const result = displayName || email || "";
   userNameCache[userId] = result;
   return result;
-}
-
-// Update display_name in trip_members for all trips where the user is a member
-// Only called when user explicitly updates their display name
-async function syncDisplayNameToTrips(userId, displayName) {
-  if (!userId) return;
-  // Don't await - let it happen in background to avoid recursion
-  supabase
-    .from("trip_members")
-    .update({ display_name: displayName || null })
-    .eq("user_id", userId)
-    .then(() => {
-      console.log('Display name synced to trips');
-    })
-    .catch((e) => {
-      // Silently fail - display_name column might not exist
-      console.log('Could not sync display name (column may not exist yet)');
-    });
-}
-
-// Helper to insert trip member, excluding display_name to avoid recursion
-async function insertTripMember(memberData) {
-  // Remove display_name to avoid RLS recursion issues
-  const { display_name, ...memberDataWithoutDisplayName } = memberData;
-  return await supabase.from("trip_members").insert(memberDataWithoutDisplayName);
 }
 
 // ---- trips
@@ -586,12 +557,11 @@ async function createTrip() {
 
   const tripId = tripRows?.[0]?.id;
 
-  const { error: memErr } = await insertTripMember({
+  const { error: memErr } = await supabase.from("trip_members").insert({
     trip_id: tripId,
     user_id: currentUser.id,
     role: "owner",
     email: currentUser.email,
-    display_name: currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id) || null,
   });
 
   createTripBtn.disabled = false;
@@ -613,12 +583,11 @@ async function joinTrip() {
   joinTripBtn.disabled = true;
   setMsg(tripsMsg, "Joining…", "warn");
 
-  const { error } = await insertTripMember({
+  const { error } = await supabase.from("trip_members").insert({
     trip_id: tripId,
     user_id: currentUser.id,
     role: "editor",
     email: currentUser.email,
-    display_name: currentUser.user_metadata?.display_name || getStoredNickname(currentUser.id) || null,
   });
 
   joinTripBtn.disabled = false;
@@ -1349,7 +1318,6 @@ async function loadPaidByOptions() {
 
   if (error || !data) {
     expensePaidBy.innerHTML = '<option value="">Error loading members</option>';
-    console.error('Error loading members:', error);
     return;
   }
 
@@ -1365,8 +1333,8 @@ async function loadPaidByOptions() {
       const displayName = getHeaderDisplayName();
       option.textContent = displayName + " (You)";
     } else {
-      const displayName = getStoredNickname(member.user_id) || member.email;
-      option.textContent = displayName || "";
+      const nickname = getStoredNickname(member.user_id);
+      option.textContent = nickname || member.email || "";
     }
     
     expensePaidBy.appendChild(option);
@@ -1457,7 +1425,8 @@ async function loadExpenses() {
 
   const memberMap = {};
   (allMembers || []).forEach((m) => {
-    memberMap[m.user_id] = getStoredNickname(m.user_id) || m.email || "";
+    const nickname = getStoredNickname(m.user_id);
+    memberMap[m.user_id] = nickname || m.email || "";
   });
 
   for (const exp of data) {
@@ -1596,10 +1565,11 @@ async function loadMembers() {
 
   setMsg(membersMsg, "", "");
 
-  // Pre-fetch display names for all members
+  // Pre-fetch display names for all members (use email from table + stored nicknames)
   const memberNames = {};
   for (const m of data) {
-    memberNames[m.user_id] = getStoredNickname(m.user_id) || m.email || "";
+    const nickname = getStoredNickname(m.user_id);
+    memberNames[m.user_id] = nickname || m.email || "";
   }
 
   for (const member of data) {
@@ -1990,11 +1960,10 @@ userBtn.addEventListener("click", () => {
   const trimmed = next.trim();
   supabase.auth.updateUser({
     data: { display_name: trimmed || null },
-  }).then(async ({ data, error }) => {
+  }).then(({ data, error }) => {
     if (error) return setMsg(tripsMsg, error.message, "bad");
     if (data?.user) currentUser = data.user;
     setStoredNickname(currentUser.id, trimmed);
-    await syncDisplayNameToTrips(currentUser.id, trimmed);
     userNameCache[currentUser.id] = formatNameWithEmail(trimmed, currentUser.email);
     userBtn.textContent = getHeaderDisplayName();
     loadMembers();
