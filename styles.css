@@ -517,27 +517,12 @@ h2 { font-size: 16px; }
 }
 
 .expenseAmount {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
   font-weight: 900;
   font-size: 16px;
   color: var(--accent);
-}
-
-/* EXPENSES WRAPPER & TOTAL */
-.expensesWrapper {
-  position: relative;
-  padding-bottom: 12px;
-}
-
-.expensesTotal {
-  text-align: right;
-  font-weight: 900;
-  font-size: 18px;
-  color: var(--accent);
-  margin-top: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: rgba(255,45,45,0.08);
-  border: 1px solid rgba(255,45,45,0.35);
 }
 
 /* PACKING LIST */
