@@ -13,10 +13,6 @@ const setMsg = (el, text, kind = "") => {
   el.textContent = text || "";
   el.className = "msg" + (kind ? ` ${kind}` : "");
 };
-const setLoader = (el) => {
-  el.innerHTML = '<div class="loader"></div>';
-  el.className = "msg";
-};
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shortId = (id) => String(id ?? "").split("-")[0];
@@ -344,7 +340,7 @@ async function handleDeepLinks() {
   const trip = params.get("trip");
 
   if (join) {
-    setLoader(tripsMsg);
+    setMsg(tripsMsg, "Joining from link…", "warn");
     const { error } = await insertTripMember({
       trip_id: join,
       user_id: currentUser.id,
@@ -456,7 +452,7 @@ async function insertTripMember(memberData) {
 
 // ---- trips
 async function loadTrips() {
-  setLoader(tripsMsg);
+  setMsg(tripsMsg, "Loading trips…", "warn");
   tripsList.innerHTML = "";
 
   // First, get trip memberships (avoids RLS recursion with joins)
@@ -578,7 +574,7 @@ async function createTrip() {
   if (!title) return setMsg(tripsMsg, "Trip title required.", "warn");
 
   createTripBtn.disabled = true;
-  setLoader(tripsMsg);
+  setMsg(tripsMsg, "Creating…", "warn");
 
   const { data: tripRows, error: tripErr } = await supabase
     .from("trips")
@@ -618,7 +614,7 @@ async function joinTrip() {
   if (!tripId) return setMsg(tripsMsg, "Enter a Trip ID.", "warn");
 
   joinTripBtn.disabled = true;
-  setLoader(tripsMsg);
+  setMsg(tripsMsg, "Joining…", "warn");
 
   const { error } = await insertTripMember({
     trip_id: tripId,
@@ -749,7 +745,7 @@ async function saveTripSettings() {
   if (!title) return setMsg(tripMsg, "Title required.", "warn");
 
   saveTripBtn.disabled = true;
-  setLoader(tripMsg);
+  setMsg(tripMsg, "Saving…", "warn");
 
   const { error } = await supabase
     .from("trips")
@@ -774,7 +770,7 @@ async function deleteTrip() {
   if (!ok) return;
 
   deleteTripBtn.disabled = true;
-  setLoader(tripMsg);
+  setMsg(tripMsg, "Deleting…", "warn");
 
   const { error } = await supabase
     .from("trips")
@@ -868,7 +864,7 @@ async function addItem() {
   
   if (isEditMode) {
     // UPDATE existing item
-    setLoader(itemsMsg);
+    setMsg(itemsMsg, "Updating…", "warn");
     
     const { error } = await supabase
       .from("itinerary_items")
@@ -930,7 +926,7 @@ async function addItem() {
 async function loadItems() {
   if (!currentTrip) return;
 
-  setLoader(itemsMsg);
+  setMsg(itemsMsg, "Loading itinerary…", "warn");
   itemsList.innerHTML = "";
 
   const { data, error } = await supabase
@@ -1144,7 +1140,7 @@ async function deleteItem(itemId) {
   if (!ok) return;
 
   deleteItemBtn.disabled = true;
-  setLoader(itemsMsg);
+  setMsg(itemsMsg, "Deleting…", "warn");
 
   const { error } = await supabase.from("itinerary_items").delete().eq("id", itemId);
 
@@ -1250,7 +1246,7 @@ async function addExpense() {
 
   if (isEditMode) {
     // UPDATE existing expense
-    setLoader(expensesMsg);
+    setMsg(expensesMsg, "Updating…", "warn");
     
     // First, delete existing splits to avoid constraint violations
     const { error: deleteError } = await supabase
@@ -1408,7 +1404,7 @@ async function loadPaidByOptions() {
 async function loadExpenses() {
   if (!currentTrip) return;
 
-  setLoader(expensesMsg);
+  setMsg(expensesMsg, "Loading expenses…", "warn");
   expensesList.innerHTML = "";
   budgetSummary.innerHTML = "";
 
@@ -1523,7 +1519,7 @@ async function deleteExpense(expenseId) {
   if (!ok) return;
 
   deleteExpenseBtn.disabled = true;
-  setLoader(expensesMsg);
+  setMsg(expensesMsg, "Deleting…", "warn");
 
   const { error } = await supabase.from("expenses").delete().eq("id", expenseId);
   
@@ -1589,7 +1585,7 @@ async function calculateMemberBalances(userId) {
 async function loadMembers() {
   if (!currentTrip) return;
 
-  setLoader(membersMsg);
+  setMsg(membersMsg, "Loading members…", "warn");
   membersList.innerHTML = "";
 
   const { data, error } = await supabase
@@ -1669,7 +1665,7 @@ async function createPackingList() {
   if (!title) return setMsg(packingMsg, "List name required.", "warn");
 
   createPackingListBtn.disabled = true;
-  setLoader(packingMsg);
+  setMsg(packingMsg, "Creating…", "warn");
 
   const { error } = await supabase.from("packing_lists").insert({
     trip_id: currentTrip.id,
@@ -1869,53 +1865,30 @@ async function loadActivityLog() {
     .select("user_id,action,details,created_at")
     .eq("trip_id", currentTrip.id)
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(20);
 
   if (error || !data?.length) {
     activityLog.innerHTML = `<div class="msg">No activity yet.</div>`;
     return;
   }
 
-  // Show first 3 items
-  for (let i = 0; i < Math.min(3, data.length); i++) {
-    const log = data[i];
-    const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
-    activityLog.appendChild(renderActivityItem(log, displayName));
-  }
-
-  // Add "Show more" button if there are more than 3 items
-  if (data.length > 3) {
-    const showMoreBtn = document.createElement("button");
-    showMoreBtn.className = "btn outlined small";
-    showMoreBtn.textContent = `Show ${data.length - 3} more`;
-    showMoreBtn.style.width = "100%";
-    showMoreBtn.addEventListener("click", async () => {
-      // Clear and show all items
-      activityLog.innerHTML = "";
-      for (const log of data) {
-        const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
-        activityLog.appendChild(renderActivityItem(log, displayName));
-      }
-      // Remove button after expanding
-      showMoreBtn.remove();
-    });
-    activityLog.appendChild(showMoreBtn);
+  for (const log of data) {
+    const email = await getUserEmail(log.user_id);
+    activityLog.appendChild(renderActivityItem(log, email));
   }
 }
 
-function renderActivityItem(log, displayName) {
+function renderActivityItem(log, email) {
   const el = document.createElement("div");
   el.className = "tile";
   const date = fmtDate(log.created_at);
   const time = new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  
-  // Format action text to be more descriptive
-  let actionText = log.action.replace(/_/g, " ");
-  
+  const actionText = log.action.replace(/_/g, " ");
+
   el.innerHTML = `
     <div>
       <div class="tileTitle">${esc(actionText)}</div>
-      <div class="tileMeta">by ${esc(displayName)} · ${date} ${time}</div>
+      <div class="tileMeta">${esc(email)} · ${date} ${time}</div>
     </div>
   `;
 
