@@ -13,6 +13,10 @@ const setMsg = (el, text, kind = "") => {
   el.textContent = text || "";
   el.className = "msg" + (kind ? ` ${kind}` : "");
 };
+const setLoader = (el) => {
+  el.innerHTML = '<div class="loader"></div>';
+  el.className = "msg";
+};
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shortId = (id) => String(id ?? "").split("-")[0];
@@ -452,7 +456,7 @@ async function insertTripMember(memberData) {
 
 // ---- trips
 async function loadTrips() {
-  setMsg(tripsMsg, "Loading trips…", "warn");
+  setLoader(tripsMsg);
   tripsList.innerHTML = "";
 
   // First, get trip memberships (avoids RLS recursion with joins)
