@@ -1,6 +1,9 @@
 -- Fix RLS policies to avoid infinite recursion
--- Simplest solution: disable RLS on trips and itinerary_items and expenses
+-- Simplest solution: disable RLS on all tables
 -- Access control is handled purely at application level through trip_members queries
+
+-- Disable RLS on trip_members (primary access control table - THIS WAS CAUSING THE RECURSION)
+ALTER TABLE trip_members DISABLE ROW LEVEL SECURITY;
 
 -- Disable RLS on trips (check membership in trip_members at app level)
 ALTER TABLE trips DISABLE ROW LEVEL SECURITY;
