@@ -358,17 +358,17 @@ h2 { font-size: 16px; }
   background-size: 300% 300%;
   cursor: pointer;
   backdrop-filter: blur(1rem);
-  border-radius: 2.5rem;
+  border-radius: 12px;
   transition: 0.5s;
   animation: gradient_301 5s ease infinite;
   border: double 4px transparent;
   background-image: linear-gradient(#212121, #212121),
     linear-gradient(
       137.48deg,
-      #ffdb3b 10%,
-      #fe53bb 45%,
-      #8f51ea 67%,
-      #0044ff 87%
+      #0066ff 10%,
+      #0099ff 45%,
+      #00ccff 67%,
+      #00ffff 87%
     );
   background-origin: border-box;
   background-clip: content-box, border-box;
@@ -384,7 +384,7 @@ h2 { font-size: 16px; }
   overflow: hidden;
   transition: 0.5s;
   backdrop-filter: blur(1rem);
-  border-radius: 2.5rem;
+  border-radius: 12px;
 }
 
 .gradient-btn strong {
@@ -432,14 +432,14 @@ h2 { font-size: 16px; }
 }
 
 .gradient-btn:active {
-  border: double 4px #fe53bb;
+  border: double 4px #00ccff;
   background-origin: border-box;
   background-clip: content-box, border-box;
   animation: none;
 }
 
 .gradient-btn:active .circle {
-  background: #fe53bb;
+  background: #00ccff;
 }
 
 .gradient-btn:disabled {
