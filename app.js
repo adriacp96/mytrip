@@ -1926,8 +1926,20 @@ function renderActivityItem(log, displayName) {
   const date = fmtDate(log.created_at);
   const time = new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
-  // Format action text to be more descriptive
+  // Format action text to be more descriptive with details
   let actionText = log.action.replace(/_/g, " ");
+  const details = log.details || {};
+  
+  // Add specific details based on action type
+  if (details.title) {
+    actionText += `: ${details.title}`;
+    if (details.category) {
+      actionText += ` (${details.category})`;
+    }
+    if (details.amount !== undefined) {
+      actionText += ` ($${details.amount})`;
+    }
+  }
   
   el.innerHTML = `
     <div>
