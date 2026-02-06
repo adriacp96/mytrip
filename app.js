@@ -2042,33 +2042,14 @@ showA2HS();
 $("toggleAuthMode").addEventListener("click", () => {
   authMode = authMode === "signin" ? "signup" : "signin";
   const toggleBtn = $("toggleAuthMode");
-  const starSvgs = `
-    <svg class="star-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53">
-      <path class="fil0" d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"></path>
-    </svg>
-    <svg class="star-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53">
-      <path class="fil0" d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"></path>
-    </svg>
-    <svg class="star-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53">
-      <path class="fil0" d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"></path>
-    </svg>
-    <svg class="star-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53">
-      <path class="fil0" d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"></path>
-    </svg>
-    <svg class="star-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53">
-      <path class="fil0" d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"></path>
-    </svg>
-    <svg class="star-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53">
-      <path class="fil0" d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"></path>
-    </svg>`;
-  
+
   if (authMode === "signin") {
     loginBtn.querySelector('span').textContent = "Sign in";
-    toggleBtn.innerHTML = starSvgs + "Create account";
+    toggleBtn.textContent = "Create account";
     toggleBtn.previousElementSibling.textContent = "Don't have an account? ";
   } else {
     loginBtn.querySelector('span').textContent = "Create account";
-    toggleBtn.innerHTML = starSvgs + "Sign in";
+    toggleBtn.textContent = "Sign in";
     toggleBtn.previousElementSibling.textContent = "Already have an account? ";
   }
   setMsg(authMsg, "", "");
