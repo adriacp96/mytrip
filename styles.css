@@ -380,7 +380,7 @@ h2 { font-size: 16px; }
 /* Star Animated Button */
 .star-btn {
   position: relative;
-  padding: 8px 16px;
+  padding: 4px 16px;
   background: #fec195;
   font-size: 13px;
   font-weight: 500;
