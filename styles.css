@@ -532,13 +532,13 @@ h2 { font-size: 16px; }
 }
 
 .tabBtn:hover {
-  border-color: rgba(255,45,45,0.35);
-  background: var(--accent2);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .tabBtn.tabActive {
-  border-color: rgba(255,45,45,0.5);
-  background: var(--accent2);
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.14);
   color: white;
 }
 
