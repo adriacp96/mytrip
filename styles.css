@@ -353,9 +353,9 @@ h2 { font-size: 16px; }
   background-color: #24b4fb;
   border-radius: 12px;
   cursor: pointer;
-  padding: 0.8em 1.2em;
+  padding: 9px 11px;
   transition: all ease-in-out 0.2s;
-  font-size: 16px;
+  font-size: 14px;
   width: 100%;
 }
 
