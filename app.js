@@ -1883,21 +1883,38 @@ async function loadActivityLog() {
     activityLog.appendChild(renderActivityItem(log, displayName));
   }
 
-  // Add "Show more" button if there are more than 3 items
+  // Add "Show more/less" button if there are more than 3 items
   if (data.length > 3) {
     const showMoreBtn = document.createElement("button");
     showMoreBtn.className = "btn soft small";
     showMoreBtn.textContent = `Show ${data.length - 3} more`;
     showMoreBtn.style.width = "100%";
+    let isExpanded = false;
+    
     showMoreBtn.addEventListener("click", async () => {
-      // Clear and show all items
+      // Clear and show items based on expanded state
       activityLog.innerHTML = "";
-      for (const log of data) {
-        const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
-        activityLog.appendChild(renderActivityItem(log, displayName));
+      
+      if (!isExpanded) {
+        // Expand: show all items
+        for (const log of data) {
+          const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
+          activityLog.appendChild(renderActivityItem(log, displayName));
+        }
+        showMoreBtn.textContent = "Show less";
+        isExpanded = true;
+      } else {
+        // Collapse: show first 3 items
+        for (let i = 0; i < 3; i++) {
+          const log = data[i];
+          const displayName = getStoredNickname(log.user_id) || (await getUserEmail(log.user_id));
+          activityLog.appendChild(renderActivityItem(log, displayName));
+        }
+        showMoreBtn.textContent = `Show ${data.length - 3} more`;
+        isExpanded = false;
       }
-      // Remove button after expanding
-      showMoreBtn.remove();
+      
+      activityLog.appendChild(showMoreBtn);
     });
     activityLog.appendChild(showMoreBtn);
   }
