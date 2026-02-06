@@ -347,6 +347,36 @@ h2 { font-size: 16px; }
 }
 .btn:disabled { opacity: .65; cursor: not-allowed; }
 
+/* Sign In Button */
+.gradient-btn {
+  border: 2px solid #24b4fb;
+  background-color: #24b4fb;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 0.8em 1.2em;
+  transition: all ease-in-out 0.2s;
+  font-size: 16px;
+  width: 100%;
+}
+
+.gradient-btn span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-weight: 600;
+}
+
+.gradient-btn:hover {
+  background-color: #0071e2;
+  border-color: #0071e2;
+}
+
+.gradient-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .chip {
   padding: 8px 10px;
   border-radius: 999px;
