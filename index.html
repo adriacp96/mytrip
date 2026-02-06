@@ -113,14 +113,6 @@
             <div class="tripTitleWrap">
               <h2 id="tripHeading">Trip</h2>
               <p id="tripRange" class="muted">Dates</p>
-
-              <div class="row wrap">
-                <div id="tripIdBadge" class="chip" style="display: flex; align-items: center; gap: 8px;">
-                  <span id="tripIdText"></span>
-                  <button id="copyTripIdBtn" class="btn ghost small" style="padding: 3px 6px; font-size: 11px;">Copy</button>
-                </div>
-                <button id="copyJoinLinkBtn" class="btn ghost">Copy Join Link</button>
-              </div>
             </div>
 
             <button id="closeTripBtn" class="btn ghost">Close</button>
@@ -270,6 +262,7 @@
                 <div class="panelTitle">Trip members</div>
                 <div id="membersList" class="list"></div>
                 <div id="membersMsg" class="msg"></div>
+                <button id="copyJoinLinkBtn" class="btn ghost" style="width: 100%; margin-top: 16px;">Copy Join Link</button>
               </div>
             </div>
 
@@ -293,6 +286,13 @@
             <div id="tabContentSettings" class="tabContent hidden">
               <div class="panel">
                 <div class="panelTitle">Trip settings</div>
+
+                <div class="row wrap" style="margin-bottom: 16px;">
+                  <div id="tripIdBadge" class="chip" style="display: flex; align-items: center; gap: 8px;">
+                    <span id="tripIdText"></span>
+                    <button id="copyTripIdBtn" class="btn ghost small" style="padding: 3px 6px; font-size: 11px;">Copy</button>
+                  </div>
+                </div>
 
                 <div class="grid2">
                   <div>
