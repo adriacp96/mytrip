@@ -1886,7 +1886,7 @@ async function loadActivityLog() {
   // Add "Show more" button if there are more than 3 items
   if (data.length > 3) {
     const showMoreBtn = document.createElement("button");
-    showMoreBtn.className = "btn outlined small";
+    showMoreBtn.className = "btn soft small";
     showMoreBtn.textContent = `Show ${data.length - 3} more`;
     showMoreBtn.style.width = "100%";
     showMoreBtn.addEventListener("click", async () => {
