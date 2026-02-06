@@ -301,14 +301,49 @@ h2 { font-size: 16px; }
   box-shadow: 0 0 0 4px rgba(255,45,45,0.10);
 }
 
-.btn {
-  border: 0;
+.btn,
+.gradient-btn,
+.liquid-btn {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.14);
+  color: #eaf6ff;
   border-radius: 12px;
   padding: 9px 12px;
   font-weight: 900;
   cursor: pointer;
   white-space: nowrap;
   font-size: 13px;
+  backdrop-filter: blur(2px) saturate(180%);
+  box-shadow: 0 8px 20px rgba(31, 38, 135, 0.2),
+    inset 0 4px 18px rgba(255, 255, 255, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
+}
+
+.btn::after,
+.gradient-btn::after,
+.liquid-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: inherit;
+  backdrop-filter: blur(1px);
+  box-shadow: inset -10px -8px 0px -11px rgba(255, 255, 255, 1),
+    inset 0px -9px 0px -8px rgba(255, 255, 255, 1);
+  opacity: 0.6;
+  filter: blur(1px) brightness(115%);
+  z-index: 0;
+}
+
+.btn:hover,
+.gradient-btn:hover,
+.liquid-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 26px rgba(31, 38, 135, 0.28),
+    inset 0 4px 20px rgba(255, 255, 255, 0.3);
 }
 .btn.small {
   padding: 7px 10px;
@@ -327,99 +362,44 @@ h2 { font-size: 16px; }
 }
 .btn.primary {
   color: white;
-  background: var(--accent);
-  box-shadow: 0 14px 35px rgba(255,45,45,0.26);
+  background: rgba(255, 45, 45, 0.18);
+  border-color: rgba(255, 45, 45, 0.65);
 }
 .btn.soft {
-  color: var(--text);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--line);
+  color: #eaf6ff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .btn.ghost {
-  color: var(--text);
-  background: transparent;
-  border: 1px solid var(--line);
+  color: #eaf6ff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 .btn.danger{
   color: white;
-  background: rgba(251,113,133,0.22);
-  border: 1px solid rgba(251,113,133,0.35);
+  background: rgba(251, 113, 133, 0.2);
+  border-color: rgba(251, 113, 133, 0.55);
 }
 .btn:disabled { opacity: .65; cursor: not-allowed; }
 
 /* Sign In Button */
 .gradient-btn {
-  border: 2px solid #24b4fb;
-  background-color: #24b4fb;
-  border-radius: 12px;
-  cursor: pointer;
   padding: 0.8em 1.2em;
-  transition: all ease-in-out 0.2s;
   font-size: 16px;
   width: 100%;
 }
 
-.gradient-btn span {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #fff;
-  font-weight: 600;
-}
-
-.gradient-btn:hover {
-  background-color: #0071e2;
-  border-color: #0071e2;
-}
-
-.gradient-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-/* Liquid Glass Button */
-.liquid-btn {
-  position: relative;
-  padding: 4px 14px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #eaf6ff;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  cursor: pointer;
-  backdrop-filter: blur(2px) saturate(180%);
-  box-shadow: 0 8px 20px rgba(31, 38, 135, 0.2),
-    inset 0 4px 18px rgba(255, 255, 255, 0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  overflow: hidden;
-}
-
+.gradient-btn span,
 .liquid-btn span {
   position: relative;
   z-index: 1;
-  font-size: 13px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #eaf6ff;
   font-weight: 600;
 }
 
-.liquid-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: inherit;
-  backdrop-filter: blur(1px);
-  box-shadow: inset -10px -8px 0px -11px rgba(255, 255, 255, 1),
-    inset 0px -9px 0px -8px rgba(255, 255, 255, 1);
-  opacity: 0.6;
-  filter: blur(1px) brightness(115%);
-  z-index: 0;
-}
-
-.liquid-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 26px rgba(31, 38, 135, 0.28),
-    inset 0 4px 20px rgba(255, 255, 255, 0.3);
-}
 
 .chip {
   padding: 8px 10px;
