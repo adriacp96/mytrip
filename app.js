@@ -207,7 +207,7 @@ async function sendMagicLink() {
   if (!password) return setMsg(authMsg, "Enter your password.", "warn");
 
   loginBtn.disabled = true;
-  setMsg(authMsg, authMode === "signin" ? "Signing in…" : "Creating account…", "warn");
+  setMsg(authMsg, "", "");
 
   let data, error;
 

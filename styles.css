@@ -641,6 +641,7 @@ h2 { font-size: 16px; }
 .gridSpan2 { grid-column: 1 / -1; }
 
 .msg { min-height: 18px; font-size: 13px; color: var(--muted); }
+#authMsg { text-align: center; }
 .msg.ok { color: var(--ok); }
 .msg.warn { color: var(--warn); }
 .msg.bad { color: var(--bad); }
