@@ -383,16 +383,16 @@ h2 { font-size: 16px; }
   background: transparent;
   font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #000000;
+  border: 1px solid rgba(0, 0, 0, 0.45);
   border-radius: 8px;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   cursor: pointer;
 }
 
 .star-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.7);
 }
 
 .chip {
